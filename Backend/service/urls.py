@@ -16,5 +16,5 @@ urlpatterns = [
     url(r'^servers/new$', ServerView.as_view()),
     url(r'^servers/(?P<server_name>.+)/$', ServerView.as_view()),
     url(r'^servers/(?P<server_name>.+)/activation', ServerView.as_view()),
-    url(r'^servers/(?P<server_name>.+)/(?P<attribute>.+)/(?P<period>.+)$', DataView.as_view()),
+    url(r'^servers/(?P<server_name>.+)/(?P<attribute>.+)/(?P<period>.+)/(?P<spacing>.+)$', DataView.as_view()),
 ]
