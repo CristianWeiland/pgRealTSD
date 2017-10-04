@@ -17,7 +17,3 @@ app.listen(port, function() {
     console.log('Server listening on port ' + port + '.');
 });
 
-var users = require('./routes/users.js')();
-
-app.post('/api/users', users.post);
-app.get('/api/random', users.get);

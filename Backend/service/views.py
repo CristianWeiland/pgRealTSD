@@ -125,12 +125,19 @@ class DataView(generics.ListAPIView):
             server_name = self.kwargs['server_name']
             attribute = self.kwargs['attribute']
             period = int(self.kwargs['period'])
+            spacing = int(self.kwargs['spacing'])
 
             server = Server.objects.get(name=server_name)
             data_list = DataList.objects.get(server=server, attribute=attribute)
             data = Data.objects.filter(data_list=data_list,
                                        date__gt=(timezone.now() - datetime.timedelta(minutes=period)))
 
-            return data
+            data_spaced = []
+
+            for i in range(len(data)):
+                if i % spacing == 0:
+                    data_spaced.append(data[i])
+
+            return data_spaced
         except:
             raise exceptions.NotFound
