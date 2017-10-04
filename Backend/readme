@@ -1,22 +1,3 @@
----------------------------------------------------------------------------------------------------
-+                                              DSMPN                                              +
-+                                                                                                 +
-+                            Database State Machine with Petri Network                            +
-+                                                                                                 +
-+                              UFPR - Universidade Federal do Paraná                              +
-+                                                                                                 +
-+                                               2017                                              +
-+                                                                                                 +
----------------------------------------------------------------------------------------------------
-Participantes:
-- Msc. Luiz Brito da Rosa;
-- Grd. Cristian Weiland;
-- Grd. Eduardo Machado;
-- Grd. Luiz Eduardo Cavalheiros.
-
-
-Backend:
-
 Implementado por Eduardo Machado
 
 Como rodar:

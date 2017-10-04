@@ -18,3 +18,12 @@ Modules:
 - Backend   --> Django backend to collect, serve and store servers data;
 - Data      --> Directory that contains data in SQLite;
 - Interface --> Angular webserver that displays information from collected data;
+
+Contributing
+
+Code Rules:
+- Language: English;
+- Tab width: 4;
+- Tab format: spaces;
+- Variable names: underscore;
+- No merges to master directly;
