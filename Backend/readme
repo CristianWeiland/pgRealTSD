@@ -1,0 +1,118 @@
+---------------------------------------------------------------------------------------------------
++                                              DSMPN                                              +
++                                                                                                 +
++                            Database State Machine with Petri Network                            +
++                                                                                                 +
++                              UFPR - Universidade Federal do Paraná                              +
++                                                                                                 +
++                                               2017                                              +
++                                                                                                 +
+---------------------------------------------------------------------------------------------------
+Participantes:
+- Msc. Luiz Brito da Rosa;
+- Grd. Cristian Weiland;
+- Grd. Eduardo Machado;
+- Grd. Luiz Eduardo Cavalheiros.
+
+
+Backend:
+
+Implementado por Eduardo Machado
+
+Como rodar:
+
+1. Instalar python3 e pip3
+
+2. pip3 install requirements.txt
+
+3. python3 manage.py runserver
+
+Rotas:
+
+===================================================================================================
+
+GET /servers/
+
+Mostra lista de servidores.
+
+===================================================================================================
+
+GET /servers/order/:order
+
+Mostra lista de servidores ordenado.
+
+Parâmetros:
+:order = 'name', '-name', 'active', '-active', 'state', '-state'
+
+===================================================================================================
+
+POST /servers/new
+
+Adiciona um novo servidor.
+
+data:
+{
+  "name": "nome_do_servidor",
+  "user_name": "usuario_usado_para_acessar_o_servidor",
+}
+
+===================================================================================================
+
+GET /servers/:server_name/
+
+Mostra os detalhes de um servidor.
+
+Parâmetros:
+:server_name = Nome do servidor que se deseja ver os detalhes.
+
+===================================================================================================
+
+GET /servers/:server_name/:attribute/:period
+
+Mostra um período de dados de um determinado atributo.
+
+Parâmetros:
+:server_name = Nome do servidor que se deseja ver os detalhes.
+:attribute = {
+	('r' = Waiting processes),
+	('b' = Sleeping processes),
+	('swpd' = Virtual memory),
+	('free' = Idle memory),
+	('buff' = Memory used as buffers),
+	('cache' = Memory used as cache),
+	('inact' = Inactive memory),
+	('active' = Active memory),
+	('si' = Memory swapped in),
+	('so' = Memory swapped out),
+	('bi' = IO (in)),
+	('bo' = IO (out)),
+	('in' = System interrupts per second),
+	('cs' = Context switches per second),
+	('us' = CPU User time),
+	('sy' = CPU System time),
+	('id' = CPU Idle time),
+	('wa' = CPU IO wait time),
+	('st' = CPU Stolen from a virtual machine time)
+}
+:period = Período em minutos que deve ser mostrado.
+					exemplo: 5 = mostra últimos 5 minutos de dados.
+
+===================================================================================================
+
+PUT /servers/:server_name/activation
+
+Ativa ou desativa o coletor de dados do servidor.
+
+Parâmetros:
+:server_name = Nome do servidor que se deseja ativar/desativar.
+
+===================================================================================================
+
+DELETE /servers/:server_name/
+
+Exclui um servidor do banco de dados.
+
+Parâmetros:
+:server_name = Nome do servidor que se deseja ver os detalhes.
+
+===================================================================================================

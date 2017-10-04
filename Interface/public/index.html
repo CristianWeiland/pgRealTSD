@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="DSMPN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--<link rel="icon" href="images/icon.png">-->
+    <base href="/">
+    <title>Título</title>
+    <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+    <link rel="stylesheet" href="components/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body ng-controller="MainCtrl">
+	<mc-alert></mc-alert>
+
+    <div ng-if="!configPage && !props.empty" class="fade">
+        <div ng-include="'../partials/menu.html'"></div>
+        <div ng-include="'../partials/main-content.html'"></div>
+    </div>
+
+    <div ng-if="configPage || props.empty" class="fade">
+        <div ng-include="'../partials/configs.html'"></div>
+    </div>
+
+    <script src="components/jquery/jquery.js"></script>
+    <script src="components/angular/angular.js"></script>
+    <script src="components/angular-ui-router/angular-ui-router.min.js"></script>
+    <script src="components/angular-resource/angular-resource.js"></script>
+    <script src="components/angular-animate/angular-animate.js"></script>
+    <script src="components/angular-bootstrap/ui-bootstrap.js"></script>
+    <script src="components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
+    <script src="components/bootstrap/bootstrap.min.js"></script>
+    <script src="components/highcharts/highcharts.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

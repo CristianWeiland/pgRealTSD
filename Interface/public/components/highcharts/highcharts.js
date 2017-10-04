@@ -1,0 +1,1 @@
+../../../bower_components/highcharts/highcharts.js

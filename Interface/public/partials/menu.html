@@ -1,0 +1,41 @@
+<div class="side-menu">
+    <nav class="navbar navbar-default" role="navigation">
+        <div class="navbar-header">
+            <div class="brand-wrapper">
+                <div class="brand-name-wrapper">
+                    <a class="navbar-brand" href="#">DSMPN</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-menu-container">
+            <br><br><br>
+            <ul class="nav navbar-nav">
+                <li>
+                    <span class="navbar-form filter">
+                        <div class="form-group">
+                            <input type="text" class="form-control" placeholder="Filter Servers"
+                                   ng-model="props.filter" ng-change="applyFilter()">
+                        </div>
+                    </span>
+                </li>
+                <br><br>
+                <li ng-repeat="server in filteredServers track by $index">
+                    <a style="color: #282828" href="#" ng-click="selectServer($index)">
+                        <span class="glyphicon" ng-class="[getIcon(server.status)]" aria-hidden="true"
+                              uib-popover="{{ status_tip(server.status) }}" popover-placement="right"
+                              popover-trigger="mouseenter" popover-append-to-body="true">
+                        </span>
+                        {{server.name}}
+                        <span uib-popover="Server {{ server.active? '' : 'not'}} collecting data!"
+                              popover-placement="right" popover-trigger="mouseenter"
+                              popover-append-to-body="true" class="color-box"
+                              ng-class="{ 'blue': server.active, 'grey': !server.active }">
+                        </span>
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+    </nav>
+</div>
