@@ -1,7 +1,7 @@
 {
-  "name": "dsmpn-ui",
+  "name": "interface",
   "version": "1.0.0",
-  "description": "User Interface to DSMPN",
+  "description": "User Interface to pgRealTSD",
   "main": "server.js",
   "dependencies": {
     "body-parser": "^1.15.2",
