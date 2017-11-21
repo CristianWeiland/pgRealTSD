@@ -278,7 +278,7 @@ angular.module('DSMPN', ['ngResource', 'ui.router',
 
     .factory('ServersFactory', function($http, $state) {
         return {
-            addServer: function (server, username, successCallback, errorCallback) {
+            addServer: function (server, username, password, successCallback, errorCallback) {
                 if (!username || !server) {
                     console.log('(addServer) Server or username not specified. Aborting request...');
                     return;
@@ -286,7 +286,7 @@ angular.module('DSMPN', ['ngResource', 'ui.router',
 
                 $http({ url: 'http://localhost:8000/servers/new',
                         method: 'POST',
-                        data: { name: server, user_name: username },
+                        data: { name: server, user_name: username, password: password },
                         headers: {
                             'Content-Type': 'application/json; charset=utf-8'
                         } })
@@ -525,7 +525,7 @@ angular.module('DSMPN', ['ngResource', 'ui.router',
 							return;
 						}
 
-                        ServersFactory.addServer($scope.server.name, $scope.server.username, function(data) {
+                        ServersFactory.addServer($scope.server.name, $scope.server.username, $scope.server.password, function(data) {
                             $alert.success('Success adding server!');
     						scope.servers.push({ name: $scope.server.name, status: 'red', active: false });
                             scope.props.empty = false;
