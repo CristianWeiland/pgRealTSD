@@ -10,7 +10,6 @@ from .views import ServerListView, ServerView, DataView
 urlpatterns = [
     # Server List
     url(r'^servers/$', ServerListView.as_view()),
-    url(r'^servers/order/(?P<order>.+)/$', ServerListView.as_view()),
 
     # Server datail
     url(r'^servers/new$', ServerView.as_view()),

@@ -35,3 +35,6 @@ class ServerDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Server
         fields = ('name', 'user_name', 'active', 'state', 'data_list')
+
+class ServerListGetSerializer(serializers.Serializer):
+    order_by = serializers.CharField(required=False)

@@ -4,11 +4,11 @@ class Server(models.Model):
     """Server class."""
 
     POSSIBLE_STATES = (
-    ('warmup', 'Warm-Up'),
-    ('steady', 'Steady'),
-    ('pressure', 'Under Pressure'),
-    ('stress', 'Stress'),
-    ('thrashing', 'Thrashing')
+        ('warmup', 'Warm-Up'),
+        ('steady', 'Steady'),
+        ('pressure', 'Under Pressure'),
+        ('stress', 'Stress'),
+        ('thrashing', 'Thrashing')
     )
 
     name = models.CharField(max_length=128)
@@ -27,25 +27,25 @@ class DataList(models.Model):
     """DataList class."""
 
     POSSIBLE_ATTRIBUTES = (
-    ('r', 'Waiting processes'),
-    ('b', 'Sleeping processes'),
-    ('swpd', 'Virtual memory'),
-    ('free', 'Idle memory'),
-    ('buff', 'Memory used as buffers'),
-    ('cache', 'Memory used as cache'),
-    ('inact', 'Inactive memory'),
-    ('active', 'Active memory'),
-    ('si', 'Memory swapped in'),
-    ('so', 'Memory swapped out'),
-    ('bi', 'IO (in)'),
-    ('bo', 'IO (out)'),
-    ('in', 'System interrupts per second'),
-    ('cs', 'Context switches per second'),
-    ('us', 'CPU User time'),
-    ('sy', 'CPU System time'),
-    ('id', 'CPU Idle time'),
-    ('wa', 'CPU IO wait time'),
-    ('st', 'CPU Stolen from a virtual machine time')
+        ('r', 'Waiting processes'),
+        ('b', 'Sleeping processes'),
+        ('swpd', 'Virtual memory'),
+        ('free', 'Idle memory'),
+        ('buff', 'Memory used as buffers'),
+        ('cache', 'Memory used as cache'),
+        ('inact', 'Inactive memory'),
+        ('active', 'Active memory'),
+        ('si', 'Memory swapped in'),
+        ('so', 'Memory swapped out'),
+        ('bi', 'IO (in)'),
+        ('bo', 'IO (out)'),
+        ('in', 'System interrupts per second'),
+        ('cs', 'Context switches per second'),
+        ('us', 'CPU User time'),
+        ('sy', 'CPU System time'),
+        ('id', 'CPU Idle time'),
+        ('wa', 'CPU IO wait time'),
+        ('st', 'CPU Stolen from a virtual machine time')
     )
 
     attribute = models.CharField(max_length=8, choices=POSSIBLE_ATTRIBUTES)

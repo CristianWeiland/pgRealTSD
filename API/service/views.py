@@ -2,47 +2,51 @@
 
 # Implemented by Eduardo Machado
 
-from rest_framework import generics, exceptions, status
+from rest_framework import generics, exceptions, status, views
 from rest_framework.response import Response
-from rest_framework.request import Request
-from rest_framework.views import APIView
 from django.http import Http404
 from django.utils import timezone
 from os import system
-import datetime
-import subprocess
+from datetime import timedelta
+from subprocess import check_output
 
-from .serializers import ServerSerializer, DataListSerializer, DataSerializer, ServerDetailSerializer
+from .serializers import ServerSerializer, DataListSerializer, DataSerializer, ServerDetailSerializer, ServerListGetSerializer
 from .models import Server, DataList, Data
 
-class ServerListView(generics.ListAPIView):
+class ServerListView(views.APIView):
     """
     Server List View
     Attributes:
         serializer_class: The serializer used for API's responses.
     """
 
-    serializer_class = ServerSerializer
+    serializer_class = ServerListGetSerializer
+    http_method_names = ['get', 'options']
 
-    def get_queryset(self):
+    def get(self, request):
         """
-        GET Queryset
-        Takes the parameters of the url and builds a response according to.
+            GET
+            Takes the parameters of the url and builds a response according to.
         """
 
         # Take url parameters
         try:
-            order = self.kwargs['order']
-            return Server.objects.all().order_by(order)
+            serializer = serializer_class(request.GET)
+            
+            if (serializer.is_valid):
+                order = serializer.data.get('order_by', '')
+                return Response(ServerSerializer(Server.objects.all().order_by(order), many=True).data, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Bad parameter'}, status=status.HTTP_400_BAD_REQUEST)
         except:
-            return Server.objects.all().order_by('name')
+            return Response(ServerSerializer(Server.objects.all().order_by('name'), many=True).data, status=status.HTTP_200_OK)
 
 
-class ServerView(APIView):
+class ServerView(views.APIView):
     """
-    Server View
-    Attributes:
-        serializer_class: The serializer used for API's responses.
+        Server View
+        Attributes:
+            serializer_class: The serializer used for API's responses.
     """
 
     def get_object(self, server_name):
@@ -67,10 +71,18 @@ class ServerView(APIView):
             except:
                 try:
                     request.data['password']
-                    bridge_status = subprocess.check_output(['python3', 'create_ssh_bridge.py',
-                                                            '-u', request.data['user_name'],
-                                                            '-s', request.data['name'],
-                                                            '-p', request.data['password']])
+                    bridge_status = check_output(
+                        [
+                            'python3',
+                            'create_ssh_bridge.py',
+                            '-u',
+                            request.data['user_name'],
+                            '-s',
+                            request.data['name'],
+                            '-p',
+                            request.data['password']
+                        ]
+                    )
 
                     if bridge_status.decode("utf-8") == 'ok':
                         serializer.save()
@@ -130,7 +142,7 @@ class DataView(generics.ListAPIView):
             server = Server.objects.get(name=server_name)
             data_list = DataList.objects.get(server=server, attribute=attribute)
             data = Data.objects.filter(data_list=data_list,
-                                       date__gt=(timezone.now() - datetime.timedelta(minutes=period)))
+                                       date__gt=(timezone.now() - timedelta(minutes=period)))
 
             data_spaced = []
 
