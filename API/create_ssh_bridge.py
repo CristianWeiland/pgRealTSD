@@ -25,12 +25,23 @@ def send_key(arguments):
     id_rsa_pub_file = open(os.path.expanduser('~/.ssh/id_rsa.pub'), 'r')
     key = id_rsa_pub_file.read()
 
-    stdout, stderr = Popen(['sshpass', '-v', '-p', arguments.password, 'ssh', '-o',
-                    'StrictHostKeyChecking=no', arguments.user_name+'@'+arguments.server_name,
-                    'echo "'+ key + '" >> ~/.ssh/authorized_keys'], stderr=PIPE).communicate()
+    stdout, stderr = Popen(
+        [
+            'sshpass',
+            '-p',
+            arguments.password,
+            'ssh',
+            '-o',
+            'StrictHostKeyChecking=no',
+            arguments.user_name+'@'+arguments.server_name,
+            'echo "'+ key + '" >> ~/.ssh/authorized_keys'
+        ],
+        stderr=PIPE
+    ).communicate()
 
-    if 'Permission' in stderr.decode("utf-8").split() or 'Could' in stderr.decode("utf-8").split():
+    if ('Permission' in stderr.decode("utf-8").split()) or ('Could' in stderr.decode("utf-8").split()):
         print('User, server or password wrong.', end='')
+
     else:
         print('ok', end='')
 
