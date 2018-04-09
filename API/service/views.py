@@ -2,135 +2,240 @@
 
 # Implemented by Eduardo Machado
 
-from rest_framework import generics, exceptions, status
+from rest_framework import generics, exceptions, status, views
 from rest_framework.response import Response
-from rest_framework.request import Request
-from rest_framework.views import APIView
 from django.http import Http404
 from django.utils import timezone
 from os import system
-import datetime
-import subprocess
+from datetime import timedelta
+from subprocess import check_output
 
-from .serializers import ServerSerializer, DataListSerializer, DataSerializer, ServerDetailSerializer
+from .serializers import ServerSerializer, ServerCreateSerializer, ServerGetSerializer, ServerDetailSerializer, ServerListSerializer, DataSerializer, DataGetSerializer
 from .models import Server, DataList, Data
 
-class ServerListView(generics.ListAPIView):
+class ServerListView(views.APIView):
     """
-    Server List View
-    Attributes:
-        serializer_class: The serializer used for API's responses.
+        order_by = ('name', '-name', 'active', '-active', 'state', '-state')
     """
 
-    serializer_class = ServerSerializer
+    serializer_class = ServerListSerializer
+    http_method_names = ['get', 'options']
 
-    def get_queryset(self):
+    def get(self, request):
         """
-        GET Queryset
-        Takes the parameters of the url and builds a response according to.
+            GET
+            Return a ordened list of all servers.
         """
 
         # Take url parameters
-        try:
-            order = self.kwargs['order']
-            return Server.objects.all().order_by(order)
-        except:
-            return Server.objects.all().order_by('name')
+        serializer = self.serializer_class(data=request.GET)
 
-
-class ServerView(APIView):
-    """
-    Server View
-    Attributes:
-        serializer_class: The serializer used for API's responses.
-    """
-
-    def get_object(self, server_name):
-        try:
-            return Server.objects.get(name=server_name)
-        except Server.DoesNotExist:
-            raise Http404
-
-    def get(self, request, server_name, format=None):
-        server = self.get_object(server_name)
-        serializer = ServerDetailSerializer(server)
-
-        return Response(serializer.data)
-
-    def post(self, request, format=None):
-        serializer = ServerSerializer(data=request.data)
         if serializer.is_valid():
-            try:
-                server = Server.objects.get(name=request.data['name'])
-                return Response('Server ' + server.name + ' already exists',
-                                status=status.HTTP_422_UNPROCESSABLE_ENTITY)
-            except:
-                try:
-                    request.data['password']
-                    bridge_status = subprocess.check_output(['python3', 'create_ssh_bridge.py',
-                                                            '-u', request.data['user_name'],
-                                                            '-s', request.data['name'],
-                                                            '-p', request.data['password']])
+
+            if serializer.data.get('order_by', ''):
+                order = serializer.data.get('order_by', '')
+                return Response(ServerSerializer(Server.objects.all().order_by(order), many=True).data, status=status.HTTP_200_OK)
+            else:
+                return Response(ServerSerializer(Server.objects.all().order_by('name'), many=True).data, status=status.HTTP_200_OK)
+        
+        return Response({'error': 'Bad parameter'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ServerCreateView(views.APIView):
+    """
+        Server Create View
+    """
+
+    serializer_class = ServerCreateSerializer
+    http_method_names = ['post', 'options']
+
+    def post(self, request):
+        """
+            POST
+            Create a new server.
+        """
+
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+
+            if Server.objects.filter(name=serializer.data.get('name')):
+                return Response('Server ' + serializer.data.get('name') + ' already exists', status = status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+            else:
+
+                if serializer.data.get('password'):
+                    bridge_status = check_output(
+                        [
+                            'python3',
+                            'create_ssh_bridge.py',
+                            '-u',
+                            serializer.data.get('user_name'),
+                            '-s',
+                            serializer.data.get('name'),
+                            '-p',
+                            serializer.data.get('password')
+                        ]
+                    )
 
                     if bridge_status.decode("utf-8") == 'ok':
-                        serializer.save()
-                        return Response(serializer.data, status=status.HTTP_201_CREATED)
+                        serverSerializer = ServerSerializer(data=serializer.data)
+
+                        if serverSerializer.is_valid():
+                            serverSerializer.save()
+                            return Response(serverSerializer.data, status=status.HTTP_201_CREATED)
+                        
+                        else:
+                            return Response(serverSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
                     else:
                         return Response(bridge_status.decode("utf-8"), status=status.HTTP_400_BAD_REQUEST)
 
-                except:
-                    serializer.save()
+                else:
+                    serverSerializer = ServerSerializer(data=serializer.data)
 
-                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                    if serverSerializer.is_valid():
+                        serverSerializer.save()
+                        return Response(serverSerializer.data, status=status.HTTP_201_CREATED)
+
+                    else:
+                        return Response(serverSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, server_name, format=None):
-        server = self.get_object(server_name)
-        server.active = not server.active
 
-        if ServerSerializer(server).is_valid:
-            if server.active:
-                system('python3 collector.py -u ' + server.user_name + ' -s ' + server_name + '&> /dev/null &')
+class ServerActivationView(views.APIView):
+    """
+        Server Activation View
+    """
 
-            server.save()
+    serializer_class = ServerGetSerializer
+    http_method_names = ['put', 'options']
 
-            return Response(ServerSerializer(server).data, status=status.HTTP_202_ACCEPTED)
-        else:
-            return Response('Error: Bad Request', status=status.HTTP_400_BAD_REQUEST)
+    def put(self, request):
+        """
+            PUT
+            Activation a new server.
+        """
 
-    def delete(self, request, server_name, format=None):
-        server = Server.objects.get(name=server_name)
-        server.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        serializer = self.serializer_class(data=request.data)
 
+        if serializer.is_valid():
+            server = Server.objects.filter(name=serializer.data.get('name'))
+            if server:
+                server[0].active = not server[0].active
+                if server[0].active:
+                    system('python3 collector.py -u ' + server[0].user_name + ' -s ' + server[0].name + '&> /dev/null &')
+
+                server[0].save()
+
+                return Response(ServerSerializer(server[0]).data, status=status.HTTP_202_ACCEPTED)
+
+            return Response({'error': 'not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ServerDeleteView(views.APIView):
+    """
+        Server Delete View
+    """
+
+    serializer_class = ServerGetSerializer
+    http_method_names = ['delete', 'options']
+
+    def delete(self, request):
+        """
+            DELETE
+            Delete a new server.
+        """
+
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            server = Server.objects.filter(name=serializer.data.get('name'))
+            if server:
+                server[0].delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            return Response({'error': 'not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ServerGetView(views.APIView):
+    """
+        Server Get View
+    """
+
+    serializer_class = ServerGetSerializer
+    http_method_names = ['get', 'options']
+
+    def get(self, request):
+        """
+            GET
+            Return a server.
+        """
+
+        serializer = self.serializer_class(data=request.GET)
+
+        if serializer.is_valid():
+            server = Server.objects.filter(name=serializer.data.get('name'))
+            if server:
+                return Response(ServerDetailSerializer(server[0]).data, status=status.HTTP_200_OK)
+
+            return Response({'error': 'not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DataView(generics.ListAPIView):
     """
-    Data View
-    Attributes:
-        serializer_class: The serializer used for API's responses.
+        attribute = {
+            ('r' = Waiting processes),
+            ('b' = Sleeping processes),
+            ('swpd' = Virtual memory),
+            ('free' = Idle memory),
+            ('buff' = Memory used as buffers),
+            ('cache' = Memory used as cache),
+            ('inact' = Inactive memory),
+            ('active' = Active memory),
+            ('si' = Memory swapped in),
+            ('so' = Memory swapped out),
+            ('bi' = IO (in)),
+            ('bo' = IO (out)),
+            ('in' = System interrupts per second),
+            ('cs' = Context switches per second),
+            ('us' = CPU User time),
+            ('sy' = CPU System time),
+            ('id' = CPU Idle time),
+            ('wa' = CPU IO wait time),
+            ('st' = CPU Stolen from a virtual machine time)
+        }
     """
 
-    serializer_class = DataSerializer
+    serializer_class = DataGetSerializer
+    http_method_names = ['get', 'options']
 
-    def get_queryset(self):
+    def get(self, request):
         """
-        GET Queryset
-        Takes the parameters of the url and builds a response according to.
+            GET
+            Returna data attribute list
         """
 
-        # Take url parameters
-        try:
-            server_name = self.kwargs['server_name']
-            attribute = self.kwargs['attribute']
-            period = int(self.kwargs['period'])
-            spacing = int(self.kwargs['spacing'])
+        serializer = self.serializer_class(data=request.GET)
+
+        if serializer.is_valid():
+
+            # Take url parameters
+            #try:
+            server_name = serializer.data.get('server_name')
+            attribute = serializer.data.get('attribute')
+            period = serializer.data.get('period', 10)
+            spacing = serializer.data.get('spacing', 1)
 
             server = Server.objects.get(name=server_name)
             data_list = DataList.objects.get(server=server, attribute=attribute)
-            data = Data.objects.filter(data_list=data_list,
-                                       date__gt=(timezone.now() - datetime.timedelta(minutes=period)))
+            data = Data.objects.filter(data_list=data_list, date__gt=(timezone.now() - timedelta(minutes=period)))
 
             data_spaced = []
 
@@ -138,6 +243,8 @@ class DataView(generics.ListAPIView):
                 if i % spacing == 0:
                     data_spaced.append(data[i])
 
-            return data_spaced
-        except:
-            raise exceptions.NotFound
+            return Response(DataSerializer(data_spaced, many=True).data, status=status.HTTP_200_OK)
+            #except:
+            #    return Response({'error': 'not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
