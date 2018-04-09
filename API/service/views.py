@@ -10,12 +10,12 @@ from os import system
 from datetime import timedelta
 from subprocess import check_output
 
-from .serializers import ServerSerializer, ServerCreateSerializer, ServerActivationSerializer, DataListSerializer, DataSerializer, ServerDetailSerializer, ServerListSerializer
+from .serializers import ServerSerializer, ServerCreateSerializer, ServerGetSerializer, ServerDetailSerializer, ServerListSerializer, DataSerializer, DataGetSerializer
 from .models import Server, DataList, Data
 
 class ServerListView(views.APIView):
     """
-        Server List View
+        order_by = ('name', '-name', 'active', '-active', 'state', '-state')
     """
 
     serializer_class = ServerListSerializer
@@ -109,7 +109,7 @@ class ServerActivationView(views.APIView):
         Server Activation View
     """
 
-    serializer_class = ServerActivationSerializer
+    serializer_class = ServerGetSerializer
     http_method_names = ['put', 'options']
 
     def put(self, request):
@@ -135,71 +135,107 @@ class ServerActivationView(views.APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ServerView(views.APIView):
+
+class ServerDeleteView(views.APIView):
     """
-        Server View
-        Attributes:
-            serializer_class: The serializer used for API's responses.
+        Server Delete View
     """
 
-    def get_object(self, server_name):
-        try:
-            return Server.objects.get(name=server_name)
-        except Server.DoesNotExist:
-            raise Http404
+    serializer_class = ServerGetSerializer
+    http_method_names = ['delete', 'options']
 
-    def get(self, request, server_name, format=None):
-        server = self.get_object(server_name)
-        serializer = ServerDetailSerializer(server)
+    def delete(self, request):
+        """
+            DELETE
+            Delete a new server.
+        """
 
-        return Response(serializer.data)
+        serializer = self.serializer_class(data=request.data)
 
-    def put(self, request, server_name, format=None):
-        server = self.get_object(server_name)
-        server.active = not server.active
+        if serializer.is_valid():
+            server = Server.objects.filter(name=serializer.data.get('name'))
+            if server:
+                server[0].delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
 
-        if ServerSerializer(server).is_valid:
-            if server.active:
-                system('python3 collector.py -u ' + server.user_name + ' -s ' + server_name + '&> /dev/null &')
+            return Response({'error': 'not found'}, status=status.HTTP_404_NOT_FOUND)
 
-            server.save()
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response(ServerSerializer(server).data, status=status.HTTP_202_ACCEPTED)
-        else:
-            return Response('Error: Bad Request', status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, server_name, format=None):
-        server = Server.objects.get(name=server_name)
-        server.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+class ServerGetView(views.APIView):
+    """
+        Server Get View
+    """
 
+    serializer_class = ServerGetSerializer
+    http_method_names = ['get', 'options']
+
+    def get(self, request):
+        """
+            GET
+            Return a server.
+        """
+
+        serializer = self.serializer_class(data=request.GET)
+
+        if serializer.is_valid():
+            server = Server.objects.filter(name=serializer.data.get('name'))
+            if server:
+                return Response(ServerDetailSerializer(server[0]).data, status=status.HTTP_200_OK)
+
+            return Response({'error': 'not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DataView(generics.ListAPIView):
     """
-    Data View
-    Attributes:
-        serializer_class: The serializer used for API's responses.
+        attribute = {
+            ('r' = Waiting processes),
+            ('b' = Sleeping processes),
+            ('swpd' = Virtual memory),
+            ('free' = Idle memory),
+            ('buff' = Memory used as buffers),
+            ('cache' = Memory used as cache),
+            ('inact' = Inactive memory),
+            ('active' = Active memory),
+            ('si' = Memory swapped in),
+            ('so' = Memory swapped out),
+            ('bi' = IO (in)),
+            ('bo' = IO (out)),
+            ('in' = System interrupts per second),
+            ('cs' = Context switches per second),
+            ('us' = CPU User time),
+            ('sy' = CPU System time),
+            ('id' = CPU Idle time),
+            ('wa' = CPU IO wait time),
+            ('st' = CPU Stolen from a virtual machine time)
+        }
     """
 
-    serializer_class = DataSerializer
+    serializer_class = DataGetSerializer
+    http_method_names = ['get', 'options']
 
-    def get_queryset(self):
+    def get(self, request):
         """
-        GET Queryset
-        Takes the parameters of the url and builds a response according to.
+            GET
+            Returna data attribute list
         """
 
-        # Take url parameters
-        try:
-            server_name = self.kwargs['server_name']
-            attribute = self.kwargs['attribute']
-            period = int(self.kwargs['period'])
-            spacing = int(self.kwargs['spacing'])
+        serializer = self.serializer_class(data=request.GET)
+
+        if serializer.is_valid():
+
+            # Take url parameters
+            #try:
+            server_name = serializer.data.get('server_name')
+            attribute = serializer.data.get('attribute')
+            period = serializer.data.get('period', 10)
+            spacing = serializer.data.get('spacing', 1)
 
             server = Server.objects.get(name=server_name)
             data_list = DataList.objects.get(server=server, attribute=attribute)
-            data = Data.objects.filter(data_list=data_list,
-                                       date__gt=(timezone.now() - timedelta(minutes=period)))
+            data = Data.objects.filter(data_list=data_list, date__gt=(timezone.now() - timedelta(minutes=period)))
 
             data_spaced = []
 
@@ -207,6 +243,8 @@ class DataView(generics.ListAPIView):
                 if i % spacing == 0:
                     data_spaced.append(data[i])
 
-            return data_spaced
-        except:
-            raise exceptions.NotFound
+            return Response(DataSerializer(data_spaced, many=True).data, status=status.HTTP_200_OK)
+            #except:
+            #    return Response({'error': 'not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
