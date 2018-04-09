@@ -9,3 +9,8 @@ Como rodar:
 > * pip3 install requirements.txt
 > * python3 manage.py migrate
 > * python3 manage.py runserver
+
+
+Documentação:
+
+> * localhost:8000/docs
