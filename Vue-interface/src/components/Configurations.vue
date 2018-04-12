@@ -50,7 +50,7 @@
             </div>
         </div>
 
-        <div class="box col-xs-8 col-xs-offset-2">
+        <div style="margin-bottom: 85px" class="box col-xs-8 col-xs-offset-2">
             <div style="margin-bottom: 25px; margin-top: 5px" class="col-xs-8">Number of graphs per line:</div>
             <div class="col-xs-4">
                 <select class="form-control" v-model="configurations.graphsPerLine">
@@ -80,10 +80,14 @@
                 <input @blur="dirty = true" class="form-control" type="number" min="2" max="1000" v-model="configurations.maxPoints"/>
             </div>
 
+            <!-- This works, but has two problems:
+                1. Checkbox style;
+                2. Performance issues when loading all graphs simultaneously;
             <div style="margin-bottom: 25px" class="col-xs-8">Initialize with graphs expanded:</div>
             <div class="col-xs-4">
                 <input @blur="dirty = true" class="form-control" type="checkbox" v-model="configurations.initializeExpanded"/>
             </div>
+            -->
 
             <div class="col-xs-12">
                 <button :disabled="!dirty" @click="saveConfigs" class="btn btn-default">Save changes</button>
@@ -110,9 +114,10 @@ export default {
         NewServerModal,
         RemoveServerModal,
     },
-    props: ['servers', 'configurations'],
+    props: ['servers'],
     data() {
         return {
+            configurations: this.$store.state.configurations,
             showingNewServerModal: false,
             showingRemoveServerModal: false,
             removeIdx: -1,
@@ -141,7 +146,9 @@ export default {
             });
         },
         saveConfigs() {
+            this.success('Configurations saved successfully!');
             this.$cookies.set('configurations', JSON.stringify(this.configurations));
+            this.$store.commit('setConfigs', this.configurations);
         },
         removeServer() {
             const idx = this.removeIdx;
@@ -183,5 +190,20 @@ export default {
     border-radius: 3px;
     padding-top: 25px;
     padding-bottom: 15px;
+}
+
+/* Footer */
+.footer {
+    position: fixed;
+    left: 0px;
+    bottom: 0px;
+    height: 55px;
+    width: 100%;
+    background-color: #fff;
+    border-top: 1px solid #C3C3C3;
+}
+.footer-btn {
+    margin-top: 10px;
+    min-width: 300px;
 }
 </style>

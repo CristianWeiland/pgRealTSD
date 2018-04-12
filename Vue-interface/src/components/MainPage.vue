@@ -45,24 +45,31 @@ export default {
         Configurations,
     },
     mounted() {
+        this.$store.commit('setLoading', true);
         this.getServers();
     },
     data() {
         let configs = this.$cookies.get('configurations');
-        if (configs) configs = JSON.parse(configs);
-        return {
-            server: {},
-            servers: [],
-            selectedServerIdx: 0,
-            showConfigurations: false,
-            configurations: configs || {
+        if (configs) {
+            configs = JSON.parse(configs);
+        } else {
+            configs = {
                 graphsPerLine: '2',
                 period: 5,
                 spacing: 3,
                 interval: 1,
                 maxPoints: 10,
                 initializeExpanded: false,
-            },
+            };
+        }
+        this.$store.commit('setConfigs', configs);
+        return {
+            loading: this.$store.state.loading,
+            server: {},
+            servers: [],
+            selectedServerIdx: 0,
+            showConfigurations: false,
+            configurations: this.$store.state.configurations,
         };
     },
     methods: {
@@ -85,6 +92,7 @@ export default {
                     this.servers = [];
                     this.error('Unable to get servers!');
                 }
+                this.$store.commit('setLoading', false);
             }).catch((err) => {
                 console.error(err);
             });
@@ -188,20 +196,5 @@ body {
 }
 .smallest-column {
     width: 1%;
-}
-
-/* Footer */
-.footer {
-    position: fixed;
-    left: 0px;
-    bottom: 0px;
-    height: 55px;
-    width: 100%;
-    background-color: #fff;
-    border-top: 1px solid #C3C3C3;
-}
-.footer-btn {
-    margin-top: 10px;
-    min-width: 300px;
 }
 </style>

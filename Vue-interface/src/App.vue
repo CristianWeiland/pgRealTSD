@@ -1,17 +1,28 @@
 <template>
     <div id="app">
         <notifications class="custom-notification"></notifications>
-        <main-page></main-page>
+        <div class="centralize">
+          <clip-loader :loading="loading.show"></clip-loader>
+        </div>
+        <main-page :class="{ loading: loading.show }"></main-page>
     </div>
 </template>
 
 <script>
+import ClipLoader from 'vue-spinner/src/ClipLoader.vue';
+
 import MainPage from './components/MainPage.vue';
 
 export default {
     name: 'app',
     components: {
-        MainPage
+        MainPage,
+        ClipLoader,
+    },
+    data() {
+      return {
+        loading: this.$store.state.loading,
+      };
     },
 };
 </script>
@@ -136,6 +147,16 @@ export default {
   visibility: visible;
   opacity: 1;
   transition: opacity .15s;
+}
+
+.centralize {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+}
+
+.loading {
+  opacity: 0.3;
 }
 
 </style>

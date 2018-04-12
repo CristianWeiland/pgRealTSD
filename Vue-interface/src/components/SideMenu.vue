@@ -15,7 +15,8 @@
                     <li>
                         <div align="center" class="form-group">
                             <button class="btn btn-default" style="width: 180px">
-                                <span style="color: #333" class="clickable" @click="$emit('refresh')">
+                                <span
+                                  style="color: #333" class="clickable" @click="refresh()">
                                     Refresh Servers &nbsp;<span class="glyphicon glyphicon-refresh"></span>
                                 </span>
                             </button>
@@ -41,7 +42,6 @@
                             <span class="color-box" :class="[ server.active ? 'blue' : 'grey' ]"></span>
                         </a>
                     </li>
-
                 </ul>
             </div>
         </nav>
@@ -56,6 +56,7 @@ export default {
         return {
             server: {},
             filter: '',
+            loading: this.$store.state.loading,
         };
     },
     computed: {
@@ -86,6 +87,11 @@ export default {
         },
         selectServer(idx) {
             this.$emit('selectServer', idx);
+        },
+        refresh() {
+            if (this.loading && this.loading.show) return;
+            this.$store.commit('setLoading', true);
+            this.$emit('refresh');
         },
     },
 };
