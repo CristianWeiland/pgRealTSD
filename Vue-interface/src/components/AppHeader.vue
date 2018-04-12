@@ -1,7 +1,7 @@
 <template>
     <div class="main-header">
         <div class="config">
-            <span style="margin-left: 10px" class="clickable" @click="configurations.showConfigurations = true">
+            <span style="margin-left: 10px" class="clickable" @click="$emit('showConfigs')">
                 <span class="glyphicon glyphicon-cog"></span>
             </span>
         </div>

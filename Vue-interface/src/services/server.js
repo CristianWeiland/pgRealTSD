@@ -1,15 +1,16 @@
 import http from '../utils/http.js';
 
 export function addServer(data) {
-    return http.post('http://localhost:8000/servers/new', data);
+    return http.post('http://localhost:8000/servers/create/', data);
 }
 
 export function getServer(serverName) {
-    return http.get(`http://localhost:8000/servers/${serverName}/`);
+    const params = { name: serverName };
+    return http.get(`http://localhost:8000/servers/get/`, { params });
 }
 
 export function getAllServers() {
-    return http.get('http://localhost:8000/servers/');
+    return http.get('http://localhost:8000/servers/list/');
 }
 
 /*
@@ -26,14 +27,15 @@ export function getServersSorted(data) {
     period: String,
 }
 */
-export function getServerAttrPer(server, attr, period) {
-    return http.get(`http://localhost:8000/servers/${server}/${attr}/${period}`);
+export function getServerAttrPer(server_name, attribute, period, spacing) {
+    const params = { server_name, attribute, period, spacing };
+    return http.get('http://localhost:8000/servers/data/', { params });
 }
 
 export function activateServer(server) {
-    return http.put(`http://localhost:8000/servers/${server}/activation/`);
+    return http.put('http://localhost:8000/servers/activation/', { name: server });
 }
 
 export function deleteServer(server) {
-    return http.delete(`http://localhost:8000/servers/${server}/`);
+    return http.delete('http://localhost:8000/servers/delete/', { name: server });
 }

@@ -17,9 +17,10 @@
 </template>
 
 <script>
+import moment from 'moment';
+
 import { getServerAttrPer } from '../services/server';
 import utils from '../utils/utils';
-
 
 export default {
     name: 'graphs',
@@ -51,7 +52,8 @@ export default {
             hasData: false,
             chart: null,
             utils,
-            dataArr: [0, 1],
+            // dataArr: [0, 1],
+            dataArr: [],
             /* fake data to test */
             fakeVal: 2,
             fakeInstant: 1,
@@ -116,7 +118,7 @@ export default {
                 },
                 yAxis: {
                     title: {
-                        text: utils.capitalize(this.attr),
+                        text: utils.capitalize(this.hrAttr),
                     },
                     plotLines: [{
                         value: 0,
@@ -131,7 +133,7 @@ export default {
                             this.Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) +
                             '<br/>Value: ' + this.y;
                         */
-                        return `Attr: <b>${vm.attr}</b><br/>Time: ${this.x}<br/>Value: ${this.y}`;
+                        return `Attr: <b>${vm.hrAttr}</b><br/>Time: ${this.x}<br/>Value: ${this.y}`;
                     },
                 },
                 series: [{
@@ -145,7 +147,174 @@ export default {
         expandBox() {
             this.intervalId = setInterval(() => {
                 getServerAttrPer(this.serverName, this.attr, this.period).then((res) => {
-                    console.log(`Got Data: ${JSON.stringify(res.data.results)}`);
+                    /* Res.data format:
+                    res.data = [
+                        { date: "11/04/2018 19:20:20", value: 855156},
+                        { date: "11/04/2018 19:20:23", value: 858460}
+                    ]*/
+                    /* V1 (não funciona):
+                    console.log(res.data);
+                    const a = this.dataArr;
+                    const b = res.data;
+                    const result = [];
+                    let i = 0, j = 0;
+                    while (i < a.length && j < b.length) {
+                        // TODO: Tem qeu usar moment nessa comparação
+                        if (a[i].date === b[j].date) {
+                            result.push(a[i].value);
+                            i += 1;
+                            j += 1;
+                        } else if (a[i].date > b[j].date) {
+                            result.push(b[j].value);
+                            j += 1;
+                        } else { // a[i].date < b[j].date
+                            result.push(a[i].value);
+                            i += 1;
+                        }
+                    }
+                    while (i < a.length) {
+                        result.push(a[i].value);
+                        i += 1;
+                    }
+                    while (j < b.length) {
+                        result.push(b[j].value);
+                        j += 1;
+                    }
+                    // TODO: Arrumar reverseArray (tem que usar moment no result[i].date)
+                    let data = utils.reverseArray(result);
+                    if (data.length > this.configurations.maxPoints) {
+                        data = data.slice(this.configurations.maxPoints);
+                    }
+                    // Isso não vai funcionar enquanto não tiver maxPoints elementos! Vai duplicar!
+                    data.forEach((elem) => {
+                        const shift = this.chart.series[0].data.length >= this.configurations.maxPoints;
+                        this.chart.series[0].addPoint([elem.value, elem.date], true, shift);
+                    });
+                    */
+                    /* V2: */
+                    /*
+                    const a = this.dataArr;
+                    const b = res.data;
+                    const n = this.configurations.maxPoints;
+                    const f = 'dd/MM/YYYY HH:mm:ss';
+                    let result = [];
+                    let i = 0, j = 0;
+                    while (i < a.length && j < b.length) {
+                        // TODO: Tem que usar moment nessa comparação
+                        if (moment(a[i].date, f) === moment(b[j].date, f)) {
+                            result.push(a[i]);
+                            i += 1;
+                            j += 1;
+                        } else if (a[i].date > b[j].date) {
+                            result.push(b[j]);
+                            j += 1;
+                        } else { // a[i].date < b[j].date
+                            result.push(a[i]);
+                            i += 1;
+                        }
+                    }
+                    while (i < a.length) {
+                        result.push(a[i]);
+                        i += 1;
+                    }
+                    while (j < b.length) {
+                        result.push(b[j]);
+                        j += 1;
+                    }
+                    // TODO: Arrumar reverseArray (tem que usar moment no result[i].date)
+                    // let data = reverseArray(result);
+                    result.sort((a, b) => {
+                        if (moment(a.date, f).isAfter(moment(b.date, f))) return 1;
+                        if (moment(b.date, f).isAfter(moment(a.date, f))) return -1;
+                        return 0;
+                    });
+                    if (result.length > n) {
+                        result = result.slice(-n);
+                        result.forEach((elem) => {
+                            // const shift = this.chart.series[0].result.length >= n;
+                            // I have enough points to remake the whole graphic, so shift will always be true.
+                            console.log('adding point...');
+                            console.log(elem.value, elem.date);
+                            this.chart.series[0].addPoint([elem.value, elem.date], true, true);
+                        });
+                    } else {
+                        // We dont have enough points to fill the whole graphic.
+                        // So we should try to remove all points and insert all of 'result' again.
+                    }
+                    console.log('Final result:');
+                    console.log(result);
+
+                    /*
+                    result.forEach((elem) => {
+                        const shift = this.chart.series[0].result.length >= n;
+                        this.chart.series[0].addPoint([elem.value, elem.date], true, shift);
+                    });
+                    */
+
+
+                    /* V3: Procura o ponto p mais recente do gráfico.
+                    Filtra dados recebidos, pegando só dados mais recentes que p (são dados novos).
+                    Ordena os dados novos.
+                    Chama addPoint pra todos os dados novos na ordem correta. */
+                    const format = 'dd/MM/YYYY HH:mm:ss';
+                    const n = this.configurations.maxPoints;
+                    let pointsToAdd = res.data;
+                    const currentData = this.chart.series[0].data;
+                    // If we have no data, we just add whatever we got from this call.
+                    if (currentData.length > 0) {
+                        // Get the most recent date in our current graph
+                        let latest = currentData.reduce((best, elem) => {
+                            if (!best) return elem;
+                            if (moment(elem.x, format).isBefore(moment(best.x, format))) {
+                                return best;
+                            }
+                            return elem;
+                        }, null);
+                        latest = moment(latest.x);
+
+                        // Get only points that are more recent than our graph's points.
+                        pointsToAdd = pointsToAdd.filter((elem) => {
+                            return moment(elem.date, format).isAfter(latest);
+                        });
+
+                        // Sort data
+                        pointsToAdd.sort((a, b) => {
+                            if (moment(a.date, f).isAfter(moment(b.date, f))) return 1;
+                            if (moment(b.date, f).isAfter(moment(a.date, f))) return -1;
+                            return 0;
+                        });
+                    }
+
+                     // If we received more points than we want to show, cut them off.
+                    if (pointsToAdd.length > n) {
+                        pointsToAdd = pointsToAdd.slice(-n);
+                    }
+
+                    pointsToAdd.forEach((elem) => {
+                        const shift = currentData.length >= n;
+                        // Highcharts expects data to be formatted in ms since epoch.
+                        const msSinceEpoch = moment(elem.date, format).valueOf();
+                        this.chart.series[0].addPoint([msSinceEpoch, elem.value], true, shift);
+                    });
+
+                    /*
+                    O raciocínio vai ser algo mais ou menos como o algoritmo de Merge do
+                    Merge Sort. Tenho dois arrays, a e b, correspondendo aos dados já existentes
+                    de um gráfico e aos dados novos que chegaram, e dois índices, i e j, cada um
+                    percorrendo cada array.
+                    Comparo os dois timestamps:
+                    while (i < a.length && j < b.length)
+                    - Se a[i].date === b[j].date, insiro o dado de qualquer um dos arrays e
+                      incremento os dois índices;
+                    - Se a[i] > b[j], result.push(b[j].value), j++;
+                    - Se a[i] < b[j], result.push(a[i].value), i++;
+                    Quando acabou, termina de inserir quem faltou do array que não acabou:
+                    while (i < a.length) result.push(a[i].value);
+                    while (j < b.length) result.push(b[j].value);
+                    Depois de inserir todos os elementos, inverte o array e corta, deixando apenas
+                    this.configurations.maxPoints elementos.
+                    Insere todos os elementos com addPoint e shift = this.chart.series[0].data.length >= this.configurations.maxPoints.
+                    */
 
                     /*
                     if (this.hasData) { // update current data
@@ -175,14 +344,15 @@ export default {
                     }
                     // If we didnt have data, we already created with correct values, so we will ignore this step.
                     */
-
+                    /*
                     if (this.hasData) {
                         this.updateData(res.data.results); 
                     }
 
                     this.hasData = true;
+                    */
                 });
-            }, this.interval * 1000);
+            }, this.interval * 3000);
         },
     },
     watch: {

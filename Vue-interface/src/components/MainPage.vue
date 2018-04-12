@@ -1,6 +1,6 @@
 <template>
     <transition name="fade" mode="out-in">
-        <div v-if="!configurations.showConfigurations">
+        <div v-if="!showConfigurations">
             <side-menu
                 @selectServer="selectServer"
                 @refresh="getServers"
@@ -9,7 +9,11 @@
             </side-menu>
 
             <div class="main main-background">
-                <app-header @deselectServer="server = {}" :configurations="configurations" :server="server"></app-header>
+                <app-header
+                    @deselectServer="server = {}"
+                    @showConfigs="showConfigurations = true"
+                    :configurations="configurations"
+                    :server="server"></app-header>
 
                 <graphs :server="server" :configurations="configurations"></graphs>
             </div>
@@ -17,7 +21,9 @@
 
         <configurations v-else
             @addServer="(server) => { this.servers.push(server); }"
+            @closeConfigs="showConfigurations = false"
             :configurations="configurations"
+            :show="showConfigurations"
             :servers="servers">
         </configurations>
     </transition>
@@ -42,13 +48,14 @@ export default {
         this.getServers();
     },
     data() {
+        let configs = this.$cookies.get('configurations');
+        if (configs) configs = JSON.parse(configs);
         return {
             server: {},
             servers: [],
             selectedServerIdx: 0,
             showConfigurations: false,
-            configurations: {
-                showConfigurations: false,
+            configurations: configs || {
                 graphsPerLine: '2',
                 period: 5,
                 spacing: 3,
@@ -65,7 +72,7 @@ export default {
                     if (!response.status || response.status !== 200) {
                         return this.error('Unable to get servers!');
                     }
-                    this.servers = response.data.results;
+                    this.servers = response.data;
                     this.server = this.servers[0];
                     // Test icons:
                     // this.servers[0].state = 'warmup';
@@ -90,8 +97,8 @@ export default {
             });
         },
         selectServer(idx) {
-            this.serverIdx = idx;
             getServer(this.servers[idx].name).then((res) => {
+                this.serverIdx = idx;
                 this.server = res.data;
             });
         },

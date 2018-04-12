@@ -11,7 +11,7 @@
         </remove-server-modal>
 
         <div class="back">
-            <span class="clickable" @click="configurations.showConfigurations = false">
+            <span class="clickable" @click="$emit('closeConfigs')">
                 <span class="clickable glyphicon glyphicon-arrow-left"></span>
             </span>
         </div>
@@ -39,7 +39,7 @@
                         <th style="padding-left: 39px" class="small-column">
                             <button class="btn btn-default" @click="turn(index)"><span class="glyphicon glyphicon-off"></span></button>
                         </th>
-                        <th style="padding-left: 16px" class="smallest-column">
+                        <th style="padding-left: 22px" class="smallest-column">
                             <button class="btn btn-default" @click="toggleRemoveServerModal(server, index)"><span class="glyphicon glyphicon-trash"></span></button>
                         </th>
                     </tr>
@@ -62,27 +62,31 @@
 
             <div style="margin-bottom: 25px" class="col-xs-8">Period to analyze data (minutes):</div>
             <div class="col-xs-4">
-                <input class="form-control" type="number" min="1" max="30" v-model="configurations.period"/>
+                <input @blur="dirty = true" class="form-control" type="number" min="1" max="30" v-model="configurations.period"/>
             </div>
 
             <div style="margin-bottom: 25px" class="col-xs-8">Spacing between data (in number of values). For example, 3 means every 3 values in database we return 1:</div>
             <div class="col-xs-4">
-                <input class="form-control" type="number" min="1" max="10" v-model="configurations.spacing"/>
+                <input @blur="dirty = true" class="form-control" type="number" min="1" max="10" v-model="configurations.spacing"/>
             </div>
 
             <div style="margin-bottom: 25px" class="col-xs-8">Interval to get new data (seconds):</div>
             <div class="col-xs-4">
-                <input class="form-control" type="number" min="1" max="30" v-model="configurations.interval"/>
+                <input @blur="dirty = true" class="form-control" type="number" min="1" max="30" v-model="configurations.interval"/>
             </div>
 
             <div style="margin-bottom: 25px" class="col-xs-8">Maximum number of points in each graph:</div>
             <div class="col-xs-4">
-                <input class="form-control" type="number" min="2" max="1000" v-model="configurations.maxPoints"/>
+                <input @blur="dirty = true" class="form-control" type="number" min="2" max="1000" v-model="configurations.maxPoints"/>
             </div>
 
             <div style="margin-bottom: 25px" class="col-xs-8">Initialize with graphs expanded:</div>
             <div class="col-xs-4">
-                <input class="form-control" type="checkbox" v-model="configurations.initializeExpanded"/>
+                <input @blur="dirty = true" class="form-control" type="checkbox" v-model="configurations.initializeExpanded"/>
+            </div>
+
+            <div class="col-xs-12">
+                <button :disabled="!dirty" @click="saveConfigs" class="btn btn-default">Save changes</button>
             </div>
         </div>
 
@@ -112,6 +116,7 @@ export default {
             showingNewServerModal: false,
             showingRemoveServerModal: false,
             removeIdx: -1,
+            dirty: false,
         };
     },
     computed: {
@@ -130,10 +135,13 @@ export default {
             activateServer(this.servers[idx].name).then((res) => {
                 console.log(res);
                 this.$set(this.servers[idx], 'active', !this.servers[idx].active);
-                this.success(`Server ${this.servers[idx].active ? 'de' : ''}activated succesfully!`);
+                this.success(`Server ${this.servers[idx].active ? '' : 'de'}activated succesfully!`);
             }).catch(() => {
-                this.error(`Unable to ${this.servers[idx].active ? 'de' : ''}activate server!`);
+                this.error(`Unable to ${this.servers[idx].active ? '' : 'de'}activate server!`);
             });
+        },
+        saveConfigs() {
+            this.$cookies.set('configurations', JSON.stringify(this.configurations));
         },
         removeServer() {
             const idx = this.removeIdx;

@@ -1,15 +1,17 @@
 import Vue from 'vue';
-import vmodal from 'vue-js-modal';
+import VTooltip from 'v-tooltip';
+import VueModal from 'vue-js-modal';
+import VueCookies from 'vue-cookies';
 import Notifications from 'vue-notification';
 import VueHighcharts from 'vue-highcharts';
-import VTooltip from 'v-tooltip';
 
 import App from './App.vue';
 
 Vue.config.productionTip = false;
 
-Vue.use(vmodal);
 Vue.use(VTooltip);
+Vue.use(VueModal);
+Vue.use(VueCookies);
 Vue.use(Notifications);
 Vue.use(VueHighcharts);
 
