@@ -117,7 +117,7 @@ export default {
                 },
                 tooltip: {
                     formatter: function() {
-                        return `Attr: <b>${vm.hrAttr}</b><br/>Time: ${this.x}<br/>Value: ${this.y}`;
+                        return `Attr: <b>${vm.hrAttr}</b><br/>Time: ${moment(this.x).format('DD/MM/YYYY HH:mm:ss')}<br/>Value: ${this.y}`;
                     },
                 },
                 series: [{
@@ -128,65 +128,74 @@ export default {
 
             this.chart = this.Highcharts.chart(`chart-${this.attr}`, chartOptions);
         },
+        loadData(firstLoad) {
+            if (firstLoad) this.chart.showLoading();
+            getServerAttrPer(this.serverName, this.attr, this.period).then((res) => {
+                /* Res.data format:
+                res.data = [
+                    { date: "11/04/2018 19:20:20", value: 855156},
+                    { date: "11/04/2018 19:20:23", value: 858460}
+                ]*/
+                /* Explicação: Procura o ponto p mais recente do gráfico.
+                Filtra dados recebidos, pegando só dados mais recentes que p (são dados novos).
+                Ordena os dados novos.
+                Chama addPoint pra todos os dados novos na ordem correta. */
+                const format = 'dd/MM/YYYY HH:mm:ss';
+                const n = this.configurations.maxPoints;
+                let pointsToAdd = res.data;
+                const currentData = this.chart.series[0].data;
+                // If we have no data, we just add whatever we got from this call.
+                if (currentData.length > 0) {
+                    // Get the most recent date in our current graph
+                    let latest = currentData.reduce((best, elem) => {
+                        if (!best) return elem;
+                        if (moment(elem.x, format).isBefore(moment(best.x, format))) {
+                            return best;
+                        }
+                        return elem;
+                    }, null);
+                    latest = moment(latest.x);
+
+                    // Get only points that are more recent than our graph's points.
+                    pointsToAdd = pointsToAdd.filter((elem) => {
+                        return moment(elem.date, format).isAfter(latest);
+                    });
+
+                    // Sort data
+                    pointsToAdd.sort((a, b) => {
+                        if (moment(a.date, format).isAfter(moment(b.date, format))) return 1;
+                        if (moment(b.date, format).isAfter(moment(a.date, format))) return -1;
+                        return 0;
+                    });
+                }
+
+                 // If we received more points than we want to show, cut them off.
+                if (pointsToAdd.length > n) {
+                    pointsToAdd = pointsToAdd.slice(-n);
+                }
+
+                this.chart.hideLoading();
+
+                pointsToAdd.forEach((elem) => {
+                    const shift = currentData.length >= n;
+                    // Highcharts expects data to be formatted in ms since epoch.
+                    const msSinceEpoch = moment(elem.date, format).valueOf();
+                    this.chart.series[0].addPoint([msSinceEpoch, elem.value], true, shift);
+                });
+            });
+        },
         expandBox() {
             this.intervalId = setInterval(() => {
-                getServerAttrPer(this.serverName, this.attr, this.period).then((res) => {
-                    /* Res.data format:
-                    res.data = [
-                        { date: "11/04/2018 19:20:20", value: 855156},
-                        { date: "11/04/2018 19:20:23", value: 858460}
-                    ]*/
-                    /* Explicação: Procura o ponto p mais recente do gráfico.
-                    Filtra dados recebidos, pegando só dados mais recentes que p (são dados novos).
-                    Ordena os dados novos.
-                    Chama addPoint pra todos os dados novos na ordem correta. */
-                    const format = 'dd/MM/YYYY HH:mm:ss';
-                    const n = this.configurations.maxPoints;
-                    let pointsToAdd = res.data;
-                    const currentData = this.chart.series[0].data;
-                    // If we have no data, we just add whatever we got from this call.
-                    if (currentData.length > 0) {
-                        // Get the most recent date in our current graph
-                        let latest = currentData.reduce((best, elem) => {
-                            if (!best) return elem;
-                            if (moment(elem.x, format).isBefore(moment(best.x, format))) {
-                                return best;
-                            }
-                            return elem;
-                        }, null);
-                        latest = moment(latest.x);
-
-                        // Get only points that are more recent than our graph's points.
-                        pointsToAdd = pointsToAdd.filter((elem) => {
-                            return moment(elem.date, format).isAfter(latest);
-                        });
-
-                        // Sort data
-                        pointsToAdd.sort((a, b) => {
-                            if (moment(a.date, format).isAfter(moment(b.date, format))) return 1;
-                            if (moment(b.date, format).isAfter(moment(a.date, format))) return -1;
-                            return 0;
-                        });
-                    }
-
-                     // If we received more points than we want to show, cut them off.
-                    if (pointsToAdd.length > n) {
-                        pointsToAdd = pointsToAdd.slice(-n);
-                    }
-
-                    pointsToAdd.forEach((elem) => {
-                        const shift = currentData.length >= n;
-                        // Highcharts expects data to be formatted in ms since epoch.
-                        const msSinceEpoch = moment(elem.date, format).valueOf();
-                        this.chart.series[0].addPoint([msSinceEpoch, elem.value], true, shift);
-                    });
-                });
+                console.log('afdasdfa');
+                this.loadData(false);
             }, this.interval * 3000);
+            this.$store.commit('createInterval', this.intervalId);
         },
     },
     watch: {
         expanded(val) {
             if (val) {
+                this.loadData(true);
                 this.expandBox();
             } else {
                 if (this.intervalId !== null) {

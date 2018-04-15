@@ -11,7 +11,7 @@
             <div class="main main-background">
                 <app-header
                     @deselectServer="server = {}"
-                    @showConfigs="showConfigurations = true"
+                    @showConfigs="showConfigs()"
                     :configurations="configurations"
                     :server="server"></app-header>
 
@@ -104,10 +104,20 @@ export default {
                 type: 'error',
             });
         },
+        showConfigs() {
+            this.showConfigurations = true;
+            this.$store.commit('removeIntervals');
+        },
         selectServer(idx) {
+            this.$store.commit('setLoading', true);
             getServer(this.servers[idx].name).then((res) => {
+                this.$store.commit('setLoading', false);
                 this.serverIdx = idx;
                 this.server = res.data;
+            }).catch((err) => {
+                console.log(err);
+                this.error(`Unable to get server ${this.servers[idx].name}!`);
+                this.$store.commit('setLoading', false);
             });
         },
     },

@@ -9,13 +9,22 @@ export default new Vuex.Store({
         loading: {
             show: false,
         },
+        intervals: [],
     },
     mutations: {
-        setConfigs (state, configurations) {
+        setConfigs(state, configurations) {
             state.configurations = configurations;
         },
-        setLoading (state, val) {
+        setLoading(state, val, msg) {
             state.loading.show = val;
+        },
+        createInterval(state, interval) {
+            state.intervals.push(interval);
+        },
+        removeIntervals(state) {
+            state.intervals.forEach((id) => {
+                clearInterval(id);
+            });
         },
     },
 });

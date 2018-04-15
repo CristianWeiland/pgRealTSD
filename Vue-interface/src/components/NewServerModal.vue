@@ -84,8 +84,10 @@ export default {
                 user_name: this.server.username,
                 password: this.server.password,
             }
+            this.$store.commit('setLoading', true);
             addServer(data).then((res) => {
                 console.log(res);
+                this.$store.commit('setLoading', false);
                 this.$emit('addServer', this.server);
                 this.$notify({
                     title: 'Success!',
@@ -96,6 +98,7 @@ export default {
                 this.reset();
             }).catch((err) => {
                 console.log(err);
+                this.$store.commit('setLoading', false);
                 this.$notify({
                     title: 'Error!',
                     text: 'Internal server error!',

@@ -22,6 +22,7 @@
                     <tr>
                         <th>#</th>
                         <th>Server</th>
+                        <th>Username</th>
                         <th>Status</th>
                         <th>Turn On/Off</th>
                         <th class="small-column">Remove</th>
@@ -31,11 +32,10 @@
                     <tr v-for="(server, index) in servers" :key="index">
                         <th>{{index+1}}</th>
                         <th>{{server.name}}</th>
-                        <th class="capitalize" :class="{ 'text-green': server.active && server.status == 'green',
-                                                           'text-yellow': server.active && server.status == 'yellow',
-                                                           'text-red': server.active && server.status == 'red',
-                                                           'text-black': !server.active }">
-                            {{ server.active ? 'Collecting - ' + server.status : 'Not Collecting' }}</th>
+                        <th>{{server.user_name}}</th>
+                        <th class="capitalize">
+                            {{ server.active ? 'Collecting - ' + server.state : 'Not Collecting' }}
+                        </th>
                         <th style="padding-left: 39px" class="small-column">
                             <button class="btn btn-default" @click="turn(index)"><span class="glyphicon glyphicon-off"></span></button>
                         </th>
@@ -154,13 +154,16 @@ export default {
             const idx = this.removeIdx;
             if (idx === -1) return;
             this.removeIdx = -1;
+            this.$store.commit('setLoading', true);
             deleteServer(this.servers[idx].name).then((res) => {
                 console.log(res);
                 this.servers.splice(idx, 1);
                 this.success('Server removed succesfully!');
+                this.$store.commit('setLoading', false);
             }).catch((err) => {
                 console.log(err);
                 this.error('Unable to remove server. Try again later.');
+                this.$store.commit('setLoading', false);
             })
         },
         toggleNewServerModal(server) {

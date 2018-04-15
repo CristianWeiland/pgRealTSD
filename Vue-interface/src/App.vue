@@ -2,7 +2,8 @@
     <div id="app">
         <notifications class="custom-notification"></notifications>
         <div class="centralize">
-          <clip-loader :loading="loading.show"></clip-loader>
+            <!-- <h2 v-if="loading.show">{{loading.msg}}</h2> -->
+            <clip-loader :loading="loading.show"></clip-loader>
         </div>
         <main-page :class="{ loading: loading.show }"></main-page>
     </div>
@@ -20,9 +21,9 @@ export default {
         ClipLoader,
     },
     data() {
-      return {
-        loading: this.$store.state.loading,
-      };
+        return {
+            loading: this.$store.state.loading,
+        };
     },
 };
 </script>
