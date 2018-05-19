@@ -37,5 +37,5 @@ export function activateServer(server) {
 }
 
 export function deleteServer(server) {
-    return http.delete('http://localhost:8000/servers/delete/', { name: server });
+    return http.delete(`http://localhost:8000/servers/delete/${server}/`);
 }

@@ -15,7 +15,7 @@ export default new Vuex.Store({
         setConfigs(state, configurations) {
             state.configurations = configurations;
         },
-        setLoading(state, val, msg) {
+        setLoading(state, val) {
             state.loading.show = val;
         },
         createInterval(state, interval) {

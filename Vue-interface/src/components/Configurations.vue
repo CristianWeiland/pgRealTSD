@@ -53,7 +53,7 @@
         <div style="margin-bottom: 85px" class="box col-xs-8 col-xs-offset-2">
             <div style="margin-bottom: 25px; margin-top: 5px" class="col-xs-8">Number of graphs per line:</div>
             <div class="col-xs-4">
-                <select class="form-control" v-model="configurations.graphsPerLine">
+                <select class="form-control" v-model="configurations.graphsPerLine" @blur="dirty = true">
                     <option value="1">1</option>
                     <option value="2">2</option>
                     <option value="3">3</option>
@@ -149,6 +149,7 @@ export default {
             this.success('Configurations saved successfully!');
             this.$cookies.set('configurations', JSON.stringify(this.configurations));
             this.$store.commit('setConfigs', this.configurations);
+            this.dirty = false;
         },
         removeServer() {
             const idx = this.removeIdx;
@@ -156,7 +157,6 @@ export default {
             this.removeIdx = -1;
             this.$store.commit('setLoading', true);
             deleteServer(this.servers[idx].name).then((res) => {
-                console.log(res);
                 this.servers.splice(idx, 1);
                 this.success('Server removed succesfully!');
                 this.$store.commit('setLoading', false);

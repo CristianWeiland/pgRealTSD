@@ -12,17 +12,17 @@ import states # ./states.py
 parser = argparse.ArgumentParser(description='Modast in python.')
 
 parser.add_argument('-f', '--filename', action="store", dest="filename",
-            help="[str] name of the JSON file containing data", default="data.json")
+            help="[str] name of the JSON file containing data. Default = data.json.", default="data.json")
 parser.add_argument('-nt', '--normalize', action="store", dest="normalize",
-            help="[str true/false], if we should or not normalize time", default="true")
+            help="[str true/false], if we should or not normalize time. Default = true.", default="true")
 parser.add_argument('-w', '--window', action="store", dest="windowSize",
-            help="[int] window size, -1 = infinity", default="-1")
+            help="[int] window size, -1 = infinity. Default = -1.", default="-1")
 parser.add_argument('-ppt', '--printperformancetrend', action="store", dest="ppt",
-            help="[str true/false] debug performance trend or not", default="false")
+            help="[str true/false] debug performance trend or not. Default = false.", default="false")
 parser.add_argument('-plot', '--plot', action="store", dest="plot",
-            help="[str true/false] plot results", default="true")
+            help="[str true/false] plot results. Default = true.", default="true")
 parser.add_argument('-separate', '--separatedwindows', action="store", dest="separate",
-            help="[str true/false] separate into 4 graph windows", default="false")
+            help="[str true/false] separate into 4 graph windows. Default = false.", default="false")
 
 args = parser.parse_args()
 
@@ -55,6 +55,7 @@ treatedSorted = [b for a, b, c in sort]
 requestedSorted = [c for a, b, c in sort]
 
 # Normalize time:
+minimum = 0
 if args.normalize == 'true':
     minimum = timeSorted[0] - 1 # -1 to make sure we wont have 0 seconds as time
     timeSorted = [x - minimum for x in timeSorted]
@@ -93,6 +94,7 @@ for i in range(0, len(timeSorted)):
 
     print('+-----------------------------------------------------------+')
     print('| Iteration #' + str(i) + "\n|")
+    print('| Timestamp ' + str(partialTime[i] + minimum) + "\n|")
     print('| Performance Variation: ' + str(performanceVariation))
     print('| Transaction Troughput: ' + str(transactionTroughput))
     print('| Performance Trend: ' + str(performanceTrend))
@@ -142,7 +144,7 @@ if args.plot == 'true':
     plt.ylabel('Current State')
     plt.title('Current State x Time')
     x1,x2,y1,y2 = plt.axis()
-    plt.axis((x1,x2,-1,5))
+    plt.axis((x1,x2,-2,5))
 
     mng = plt.get_current_fig_manager()
     mng.resize(*mng.window.maxsize())
