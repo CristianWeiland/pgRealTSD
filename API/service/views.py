@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from django.http import Http404
 from django.utils import timezone
 from os import system
-from datetime import timedelta
+from time import time
 from subprocess import check_output
 
 from .serializers import ServerSerializer, ServerCreateSerializer, ServerGetSerializer, ServerDetailSerializer, ServerListSerializer, DataSerializer, DataGetSerializer
@@ -228,12 +228,9 @@ class DataView(generics.ListAPIView):
             period = serializer.data.get('period', 10)
             spacing = serializer.data.get('spacing', 1)
 
-            server = Server.objects.get(name=server_name)
-            data_list = DataList.objects.get(server=server, attribute=attribute)
-            data = Data.objects.filter(data_list=data_list, date__gt=(timezone.now() - timedelta(minutes=period)))
+            data = Data.objects.filter(data_list__server__name=server_name, data_list__attribute=attribute, timestamp__gt = (int(time()) - (period * 60)))
 
             data_spaced = []
-
             for i in range(len(data)):
                 if i % spacing == 0:
                     data_spaced.append(data[i])

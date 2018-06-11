@@ -59,8 +59,8 @@ class Data(models.Model):
     """Data class."""
 
     data_list = models.ForeignKey(DataList, related_name='data', on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now=True)
+    timestamp = models.IntegerField(default=0)
     value = models.IntegerField()
 
     class Meta:
-        unique_together = ('data_list', 'date')
+        unique_together = ('data_list', 'timestamp')
