@@ -4,7 +4,9 @@ from subprocess import Popen, PIPE
 from optparse import OptionParser
 from re import sub
 from getpass import getuser
+from MoDaST import variables, states
 
+import json
 import time
 import os
 import django
@@ -13,6 +15,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Backend.settings")
 django.setup()
 
 from service.models import Data, DataList, Server
+from service.serializers import DataSerializer
 
 timestamp_now = 0
 
@@ -43,7 +46,7 @@ def get_attributes(arguments):
         stdout, stderr = Popen(['ssh', arguments.user_name+'@'+arguments.server_name, 'vmstat'],
                                stdout=PIPE).communicate()
 
-    timestamp_now = int(time.time())
+    timestamp_now = int( time.time() )
     output = stdout.decode("utf-8")
 
     return output
@@ -118,16 +121,6 @@ def get_requests_time(arguments):
 def save_attributes(attributes_names_list, attributes_values_list, arguments):
     global timestamp_now
 
-    try:
-        Server.objects.get(name=arguments.server_name)
-    except:
-        new_server = Server()
-        new_server.name = arguments.server_name
-        new_server.user_name = arguments.user_name
-        new_server.save()
-
-        print('Server ' + new_server.name + ' added to database.')
-
     server = Server.objects.get(name=arguments.server_name)
 
     for i in range(len(attributes_names_list)):
@@ -156,15 +149,7 @@ def save_attributes(attributes_names_list, attributes_values_list, arguments):
 def save_requests_time(requests, responses, arguments):
     global timestamp_now
 
-    try:
-        server = Server.objects.get(name=arguments.server_name)
-    except:
-        server = Server()
-        server.name = arguments.server_name
-        server.user_name = arguments.user_name
-        server.save()
-
-        print('Server ' + server.name + ' added to database.')
+    server = Server.objects.get(name=arguments.server_name)
 
     try:
         data_list_request = DataList.objects.get(attribute='requests', server=server)
@@ -182,50 +167,99 @@ def save_requests_time(requests, responses, arguments):
         data_list_response.server = server
         data_list_response.save()
 
-    for request in requests:
+    for key, value in requests.items():
         try:
-            data = Data.objects.get(timestamp=request, data_list=data_list_request)
-            data.value += 1
+            data = Data.objects.get(timestamp=int(key), data_list=data_list_request)
+            data.value += value
             data.save()
         except:
             data = Data()
             data.data_list = data_list_request
-            data.value = 1
-            data.timestamp = request
+            data.value = value
+            data.timestamp = key
             data.save()
     
-    for response in responses:
+    for key, value in responses.items():
         try:
-            data = Data.objects.get(timestamp=response, data_list=data_list_response)
-            data.value += 1
+            data = Data.objects.get(timestamp=int(key), data_list=data_list_response)
+            data.value += value
             data.save()
         except:
             data = Data()
             data.data_list = data_list_response
-            data.value = 1
-            data.timestamp = response
+            data.value = value
+            data.timestamp = key
             data.save()
 
+
+def get_states_data(time_now, window_size):
+    requests = Data.objects.filter(timestamp__gte = time_now - window_size, timestamp__lte = time_now, data_list__attribute = 'requests').order_by('timestamp')
+    responses = Data.objects.filter(timestamp__gte = time_now - window_size, timestamp__lte = time_now, data_list__attribute = 'responses').order_by('timestamp')
+
+    timestamp_list = []
+    requests_list = []
+    responses_list = []
+    for timestamp in range((time_now - window_size), time_now):
+        timestamp_list.append(timestamp)
+        try:
+            request = DataSerializer(requests.get(timestamp=timestamp)).data.get('value')
+        except:
+            request = 0
+        requests_list.append(request)
+        try:
+            response = DataSerializer(responses.get(timestamp=timestamp)).data.get('value')
+        except:
+            response = 0
+        responses_list.append(response)
+
+    return timestamp_list, requests_list, responses_list
 
 # Start program
 arguments = read_arguments()
 
 requests_data_refresh(arguments)
+
+try:
+    server = Server.objects.get(name=arguments.server_name)
+except:
+    server = Server()
+    server.name = arguments.server_name
+    server.user_name = arguments.user_name
+    server.save()
+
+    print('Server ' + server.name + ' added to database.')
+
+try:
+    data_list_state = DataList.objects.get(attribute='states', server=server)
+except:
+    data_list_state = DataList()
+    data_list_state.attribute = 'states'
+    data_list_state.server = server
+    data_list_state.save()
+
 while True:
     output = get_attributes(arguments)
     requests_time_data = get_requests_time(arguments)
 
-    requests = []
-    responses = []
+    requests = {}
+    responses = {}
     for line in requests_time_data.split('\n')[1: (len(requests_time_data.split('\n')) - 1)]:
         attributes = line.split(' ')
         if (int(attributes[3]) < 300):
-            requests.append(
-                int(float(attributes[1]) - float(attributes[2]))
-            )
-            responses.append(int(float(attributes[1])))
+            if requests.get(str(int(float(attributes[1]) - float(attributes[2])))):
+                requests[str(int(float(attributes[1]) - float(attributes[2])))] +=1
+            else:
+                requests[str(int(float(attributes[1]) - float(attributes[2])))] = 1
+
+            if responses.get(str(int(float(attributes[1])))):
+                responses[str(int(float(attributes[1])))] += 1
+            else:
+                responses[str(int(float(attributes[1])))] = 1
         else:
-            requests.append(int(float(attributes[1])))
+            if requests.get(str(int(float(attributes[1])))):
+                requests[str(int(float(attributes[1])))] += 1
+            else:
+                requests[str(int(float(attributes[1])))] = 1
 
     attributes_names_list = output.splitlines()[1].split()
     attributes_values_list = output.splitlines()[2].split()
@@ -233,5 +267,47 @@ while True:
     save_attributes(attributes_names_list, attributes_values_list, arguments)
     save_requests_time(requests, responses, arguments)
 
+    window_size = 60
+    time_now = int(time.time())
+
+    states_query = Data.objects.filter(timestamp__gte = time_now - window_size, timestamp__lte = time_now, data_list__attribute = 'states').order_by('-timestamp')
+    if len(states_query) != 0:
+        last_state_timestamp = states_query[0].timestamp + 1
+        last_state_value = states_query[0].value
+        print('======>' + str(last_state_value))
+    else:
+        last_state_timestamp = time_now - window_size
+        last_state_value = 0
+        print('Deu merda')
+    
+    for timestamp in range(last_state_timestamp, time_now):
+        timestamp_list, requests_list, responses_list = get_states_data(timestamp, window_size)
+
+        performanceVariation = variables.calculatePerformanceVariation(len(timestamp_list) - 1, responses_list, window_size)
+        transactionTroughput = variables.calculateTransactionTroughput(responses_list, requests_list, window_size)
+        performanceTrend = variables.calculatePerformanceTrend(timestamp_list, responses_list, window_size)
+
+        currentState = states.getNextState(last_state_value, performanceVariation, transactionTroughput, performanceTrend, responses_list[len(responses_list) - 1])
+        print(str(performanceVariation) + ' | ' + str(transactionTroughput) + ' | ' + str(performanceTrend) + ' | ' + str(currentState))
+        
+        data = Data()
+        data.data_list = data_list_state
+        data.timestamp = timestamp
+        data.value = currentState
+        data.save()
+        #print('------------------------------') 
+        #for i in range(len(timestamp_list)):
+        #    print(str(timestamp_list[i]) + ' | ' + str(requests_list[i]) + ' | ' + str(responses_list[i]))
+        #    print('------------------------------') 
+        print('------------------------------') 
+    # i = tamanho do array
+    # partialTreated = array de requisicoes tratadas
+    # partialRequested = array de requisicoes requeridas
+    # partialTime = array de timestamps (eixo X do grafico do modast)
+    # partialTreated[i] eh o numero de requisicoes tratadas no ultimo segundo
+
+    # currentState comeca valendo warmup (pode fazer states.intialState que ta definido la)
+
     if arguments.verbose: print(attributes_values_list)
-    if not Server.objects.get(name=arguments.server_name).active: break
+
+    # if not Server.objects.get(name=arguments.server_name).active: break

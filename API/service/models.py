@@ -59,7 +59,7 @@ class Data(models.Model):
     """Data class."""
 
     data_list = models.ForeignKey(DataList, related_name='data', on_delete=models.CASCADE)
-    timestamp = models.IntegerField(default=0)
+    timestamp = models.IntegerField(default=0, db_index=True)
     value = models.IntegerField()
 
     class Meta:
