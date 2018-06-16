@@ -14,13 +14,13 @@
 
                 <div class="col-xs-4 control-label"> Username *: </div>
                 <div class="col-xs-8">
-                    <input class="form-group form-control" :class="{ 'has-error': hasError('username') }"
+                    <input class="form-group form-control"
                         type="text" v-model="server.username" @input="dirty.username = true"/>
                 </div>
 
                 <div class="col-xs-4 control-label"> Password *: </div>
                 <div class="col-xs-8">
-                    <input class="form-group form-control" :class="{ 'has-error': hasError('password') }"
+                    <input class="form-group form-control"
                         type="password" v-model="server.password" @input="dirty.password = true"/>
                 </div>
             </div>
@@ -68,7 +68,7 @@ export default {
         },
         validate() {
             this.submitted = true;
-            if (this.hasError('name') || this.hasError('username') || this.hasError('password')) {
+            if (this.hasError('name')) {
                 this.$notify({
                     title: 'Error!',
                     text: 'Invalid fields.',
@@ -81,9 +81,11 @@ export default {
         submit() {
             const data = {
                 name: this.server.name,
-                user_name: this.server.username,
-                password: this.server.password,
             }
+
+            if (this.server.username) data.user_name = this.server.username;
+            if (this.server.password) data.password = this.server.password;
+
             this.$store.commit('setLoading', true);
             addServer(data).then((res) => {
                 console.log(res);
