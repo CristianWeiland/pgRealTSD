@@ -31,7 +31,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'service.apps.ServiceConfig',
     'rest_framework',
     'corsheaders',
     'django.contrib.admin',
@@ -41,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework_docs',
+    'service',
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True

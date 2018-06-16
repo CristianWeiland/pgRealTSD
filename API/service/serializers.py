@@ -5,7 +5,7 @@ from .models import Server, DataList, Data
 class DataSerializer(serializers.ModelSerializer):
     class Meta:
         model = Data
-        fields = ('date', 'value')
+        fields = ('timestamp', 'value')
 
 
 class ServerSerializer(serializers.ModelSerializer):

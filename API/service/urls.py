@@ -15,6 +15,6 @@ urlpatterns = [
     url(r'^servers/activation/', ServerActivationView.as_view()),
     url(r'^servers/list/', ServerListView.as_view()),
     url(r'^servers/get/', ServerGetView.as_view()),
-    url(r'^servers/delete/', ServerDeleteView.as_view()),
+    url(r'^servers/delete/(?P<name>[0-9a-zA-Z]+)/$', ServerDeleteView.as_view()),
     url(r'^servers/data/', DataView.as_view()),
 ]
