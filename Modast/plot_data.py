@@ -52,7 +52,7 @@ if args.normalize == 'true':
 
 plt.plot(timeSorted, requestedSorted)
 plt.plot(timeSorted, treatedSorted)
-plt.legend(['# of Requested Transactions', '# of Treated Transactions'], loc='upper right')
+plt.legend(['# of Requested Transactions', '# of Treated Transactions'], loc='upper left')
 plt.xlabel('Time (Seconds)')
 plt.ylabel('Number of Transactions')
 plt.title('Treated / Requested Transactions x Time (seconds)')
@@ -61,3 +61,4 @@ mng = plt.get_current_fig_manager()
 mng.resize(*mng.window.maxsize())
 plt.show()
 
+#plt.savefig('output.png')

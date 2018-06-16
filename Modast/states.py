@@ -18,7 +18,7 @@ def getNextState(currentState, performanceVariation, transactionTroughput, perfo
         return states[2]
 
     elif currentState == states[2]: # treat under_pressure
-        if performanceVariation > STRESS_THRESHOLD * transactionsTreated:
+        if performanceVariation > (STRESS_THRESHOLD * transactionsTreated):
             return states[3]
         if transactionTroughput > STEADY_THRESHOLD:
             return states[1]
