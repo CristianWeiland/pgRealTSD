@@ -200,17 +200,18 @@ def get_states_data(time_now, window_size):
     requests_list = []
     responses_list = []
     for timestamp in range((time_now - window_size), time_now):
-        timestamp_list.append(timestamp)
         try:
             request = DataSerializer(requests.get(timestamp=timestamp)).data.get('value')
         except:
-            request = 0
-        requests_list.append(request)
+            request = None
         try:
             response = DataSerializer(responses.get(timestamp=timestamp)).data.get('value')
         except:
-            response = 0
-        responses_list.append(response)
+            response = None
+        if request and response:
+            timestamp_list.append(timestamp)
+            requests_list.append(request)
+            responses_list.append(response)
 
     return timestamp_list, requests_list, responses_list
 
@@ -274,40 +275,28 @@ while True:
     if len(states_query) != 0:
         last_state_timestamp = states_query[0].timestamp + 1
         last_state_value = states_query[0].value
-        print('======>' + str(last_state_value))
     else:
         last_state_timestamp = time_now - window_size
-        last_state_value = 0
-        print('Deu merda')
+        last_state_value = 1
     
     for timestamp in range(last_state_timestamp, time_now):
         timestamp_list, requests_list, responses_list = get_states_data(timestamp, window_size)
 
-        performanceVariation = variables.calculatePerformanceVariation(len(timestamp_list) - 1, responses_list, window_size)
-        transactionTroughput = variables.calculateTransactionTroughput(responses_list, requests_list, window_size)
-        performanceTrend = variables.calculatePerformanceTrend(timestamp_list, responses_list, window_size)
+        if len(timestamp_list) > 0:
+            performanceVariation = variables.calculatePerformanceVariation(len(timestamp_list), responses_list, window_size)
+            transactionTroughput = variables.calculateTransactionTroughput(responses_list, requests_list, window_size)
+            performanceTrend = variables.calculatePerformanceTrend(timestamp_list, responses_list, window_size)
 
-        currentState = states.getNextState(last_state_value, performanceVariation, transactionTroughput, performanceTrend, responses_list[len(responses_list) - 1])
-        print(str(performanceVariation) + ' | ' + str(transactionTroughput) + ' | ' + str(performanceTrend) + ' | ' + str(currentState))
-        
-        data = Data()
-        data.data_list = data_list_state
-        data.timestamp = timestamp
-        data.value = currentState
-        data.save()
-        #print('------------------------------') 
-        #for i in range(len(timestamp_list)):
-        #    print(str(timestamp_list[i]) + ' | ' + str(requests_list[i]) + ' | ' + str(responses_list[i]))
-        #    print('------------------------------') 
-        print('------------------------------') 
-    # i = tamanho do array
-    # partialTreated = array de requisicoes tratadas
-    # partialRequested = array de requisicoes requeridas
-    # partialTime = array de timestamps (eixo X do grafico do modast)
-    # partialTreated[i] eh o numero de requisicoes tratadas no ultimo segundo
-
-    # currentState comeca valendo warmup (pode fazer states.intialState que ta definido la)
+            currentState = states.getNextState(last_state_value, performanceVariation, transactionTroughput, performanceTrend, responses_list[len(responses_list) - 1])
+            print(str(performanceVariation) + ' | ' + str(transactionTroughput) + ' | ' + str(performanceTrend) + ' | ' + str(currentState))
+            
+            data = Data()
+            data.data_list = data_list_state
+            data.timestamp = timestamp
+            data.value = currentState
+            data.save()
 
     if arguments.verbose: print(attributes_values_list)
 
+    # TODO: Descomentar isso para rodar a API
     # if not Server.objects.get(name=arguments.server_name).active: break

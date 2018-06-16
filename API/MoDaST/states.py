@@ -1,5 +1,5 @@
 states = ['warmup', 'steady', 'under_pressure', 'stress', 'thrashing']
-initialState = 'warmup'
+initialState = 'steady'
 
 WARMUP_THRESHOLD = 0.1
 STEADY_THRESHOLD = 0.9
