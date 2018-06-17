@@ -9,8 +9,10 @@ from django.utils import timezone
 from os import system
 from time import time
 from subprocess import check_output
+from numpy import corrcoef
+import json
 
-from .serializers import ServerSerializer, ServerCreateSerializer, ServerGetSerializer, ServerDetailSerializer, ServerListSerializer, DataSerializer, DataGetSerializer
+from .serializers import ServerSerializer, ServerCreateSerializer, ServerGetSerializer, ServerDetailSerializer, ServerListSerializer, DataSerializer, DataGetSerializer, CorrelactionGetSerializer
 from .models import Server, DataList, Data
 
 class ServerListView(views.APIView):
@@ -220,9 +222,6 @@ class DataView(generics.ListAPIView):
         serializer = self.serializer_class(data=request.GET)
 
         if serializer.is_valid():
-
-            # Take url parameters
-            #try:
             server_name = serializer.data.get('server_name')
             attribute = serializer.data.get('attribute')
             period = serializer.data.get('period', 10)
@@ -236,7 +235,70 @@ class DataView(generics.ListAPIView):
                     data_spaced.append(data[i])
 
             return Response(DataSerializer(data_spaced, many=True).data, status=status.HTTP_200_OK)
-            #except:
-            #    return Response({'error': 'not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CorrelactionView(generics.ListAPIView):
+    """
+        Return correlations of attributes with state
+    """
+
+    serializer_class = CorrelactionGetSerializer
+    http_method_names = ['get', 'options']
+
+    def get(self, request):
+        """
+            GET
+            Returna correlactions
+        """
+
+        serializer = self.serializer_class(data=request.GET)
+
+        if serializer.is_valid():
+            server_name = serializer.data.get('server_name')
+            start = serializer.data.get('start')
+            end = serializer.data.get('end')
+
+            server = Server.objects.filter(name=server_name).distinct()[0]
+            attributes = []
+            for data_list in ServerDetailSerializer(server).data.get('data_list'):
+                attributes.append(data_list['attribute'])
+            attributes.remove('states')
+            attributes.remove('responses')
+            attributes.remove('requests')
+
+            states = Data.objects.filter(
+                data_list__server__name=server_name,
+                data_list__attribute='states',
+                timestamp__gte=start,
+                timestamp__lte=end,
+            ).distinct()
+
+            response_data = {}
+            for attribute in attributes:
+                data = Data.objects.filter(
+                    data_list__server__name=server_name,
+                    data_list__attribute=attribute,
+                    timestamp__gte=start,
+                    timestamp__lte=end,
+                ).distinct()
+
+                data_list = []
+                states_list = []
+                for timestamp in range(start, end):
+                    data_inst = data.filter(timestamp=timestamp).distinct()
+                    states_inst = states.filter(timestamp=timestamp).distinct()
+                    if len(data_inst) > 0 and len(states_inst) > 0:
+                        if data_inst[0].value != None and states_inst[0].value != None:
+                            data_list.append(data_inst[0].value)
+                            states_list.append(states_inst[0].value)
+                
+                if len(data_list) > 10 and len(states_list) > 10:
+                    correlaction = corrcoef(data_list, states_list)
+
+                    response_data[attribute] = [str(correlaction[0]), str(correlaction[1])]
+
+            return Response(response_data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
