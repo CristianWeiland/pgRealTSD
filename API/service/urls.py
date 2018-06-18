@@ -5,7 +5,7 @@
 from django.conf.urls import url
 from rest_framework import routers
 
-from .views import ServerListView, ServerCreateView, ServerActivationView, ServerGetView, ServerDeleteView, DataView
+from .views import ServerListView, ServerCreateView, ServerActivationView, ServerGetView, ServerDeleteView, DataView, CorrelactionView
 
 """
     pgRealTSD
@@ -17,4 +17,5 @@ urlpatterns = [
     url(r'^servers/get/', ServerGetView.as_view()),
     url(r'^servers/delete/(?P<name>[0-9a-zA-Z]+)/$', ServerDeleteView.as_view()),
     url(r'^servers/data/', DataView.as_view()),
+    url(r'^servers/correlaction/', CorrelactionView.as_view()),
 ]

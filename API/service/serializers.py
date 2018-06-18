@@ -72,3 +72,13 @@ class DataGetSerializer(serializers.Serializer):
     attribute = serializers.CharField(required=True)
     period = serializers.IntegerField(required=False)
     spacing = serializers.IntegerField(required=False)
+
+
+class CorrelactionGetSerializer(serializers.Serializer):
+    """
+        Correlaction get Serializer
+    """
+
+    server_name = serializers.CharField(required=True)
+    start = serializers.IntegerField(required=True)
+    end = serializers.IntegerField(required=True)
