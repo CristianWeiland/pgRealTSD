@@ -156,7 +156,7 @@ export default {
             if (idx === -1) return;
             this.removeIdx = -1;
             this.$store.commit('setLoading', true);
-            deleteServer(this.servers[idx].name).then((res) => {
+            deleteServer(this.servers[idx].name).then(() => {
                 this.servers.splice(idx, 1);
                 this.success('Server removed succesfully!');
                 this.$store.commit('setLoading', false);
@@ -191,8 +191,10 @@ export default {
 .box {
     border: 1px solid #bababa;
     border-radius: 3px;
+    box-shadow: 1px 1px rgba(0,0,0,0.2);
     padding-top: 25px;
     padding-bottom: 15px;
+    background-color: rgba(0,0,0,0.05);
 }
 
 /* Footer */

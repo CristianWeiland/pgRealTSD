@@ -14,7 +14,9 @@
             </div>
         </div>
     </div>
-    <div v-else-if="availableAttributes">This server has no available data types.</div>
+    <div style="height: 100px; font-size: 30px; margin-top: 50px;" v-else-if="availableAttributes">
+        This server has no available data types.
+    </div>
 </template>
 
 <script>
@@ -73,6 +75,9 @@ export default {
                 id: 'CPU Idle time',
                 wa: 'CPU IO wait time',
                 st: 'CPU Stolen from a virtual machine tim',
+                requests: 'Number of requests',
+                responses: 'Number of responses',
+                states: 'States',
             };
             return parser[attr];
         },
