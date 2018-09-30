@@ -11,7 +11,7 @@
 
             <div class="side-menu-container">
                 <br><br><br>
-                <ul style="margin-top: -15px; width: 215px" class="nav navbar-nav">
+                <ul style="margin-top: -15px; width: 214px" class="nav navbar-nav">
                     <li>
                         <div align="center" class="form-group">
                             <button class="btn btn-default" style="width: 180px">
@@ -32,15 +32,28 @@
                         </span>
                     </li>
                     <li style="height: 12px; border-bottom: 1px solid #bababa"></li>
-                    <li v-for="(server, index) in filteredServers" :key="index">
-                        <a style="color: #282828" href="#" @click="selectServer(index)">
-                            <span
-                              class="glyphicon" :class="[getIcon(server.state)]"
-                              v-tooltip.top-center="statusTip(server.state)">
-                            </span>
-                            {{server.name}}
-                            <span class="color-box" :class="[ server.active ? 'blue' : 'grey' ]"></span>
-                        </a>
+                    <li style="padding: 15px; background-color: #455062">
+                      <div v-for="(server, index) in filteredServers" :key="index"
+                        class="server-box" @click="selectServer(index)">
+                          <!--
+                          <a style="color: #282828; text-decoration: none" href="#">
+                              <span class="glyphicon" :class="[getIcon(server.state)]" style="top: 3px"
+                                v-tooltip.top-center="statusTip(server.state)">
+                              </span>
+                              {{server.name}}
+                              <span class="color-box" :class="[ server.active ? 'blue' : 'grey' ]"
+                                style="margin-top: 8px"></span>
+                          </a>
+                          -->
+                          <a style="display: grid; grid-template-columns: auto 1fr auto; color: #282828; text-decoration: none" href="#">
+                              <span class="glyphicon" :class="[getIcon(server.state)]" style="top: 3px"
+                                v-tooltip.top-center="statusTip(server.state)">
+                              </span>
+                              <span>{{server.name}}</span>
+                              <span class="color-box" :class="[ server.active ? 'blue' : 'grey' ]"
+                                style="margin-top: 8px"></span>
+                          </a>
+                      </div>
                     </li>
                 </ul>
             </div>
@@ -133,12 +146,11 @@ export default {
   /*border-bottom: 1px solid #e7e7e7;*/
 }
 .side-menu .navbar-nav li a {
-  padding: 15px;
 }
 .side-menu .navbar-nav li a:hover {
   /*background-color: rgba(59,70,88,0.87);*/
   /*background-color: rgba(255,255,255,0.87);*/
-  background-color: #dbdbdb; /* Color when hovering */
+  /*background-color: #dbdbdb; /* Color when hovering */
 }
 .side-menu .brand-name-wrapper {
   min-height: 50px;
@@ -193,6 +205,19 @@ export default {
 .side-menu-text-color {
   color: #e7e7e7;
 }
+
+.server-box {
+  cursor: pointer;
+  padding: 10px;
+  background-color: #fff;
+  margin-bottom: 15px;
+  border-radius: 10px;
+}
+
+.server-box:hover {
+  background-color: #dedede;
+}
+
 /* small screen */
 @media (max-width: 768px) {
   .side-menu {

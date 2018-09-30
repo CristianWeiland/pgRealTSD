@@ -3,7 +3,7 @@
         <div v-if="!showConfigurations">
             <side-menu
                 @selectServer="selectServer"
-                @refresh="getServers"
+                @refresh="getServers(true)"
                 :servers="servers"
                 :serverIdx="selectedServerIdx">
             </side-menu>
@@ -73,7 +73,7 @@ export default {
         };
     },
     methods: {
-        getServers() {
+        getServers(isRefresh) {
             getAllServers().then((response) => {
                 try {
                     if (!response.status || response.status !== 200) {
@@ -87,13 +87,22 @@ export default {
                     // this.servers[0].state = 'under_pressure';
                     // this.servers[0].state = 'stress';
                     // this.servers[0].state = 'trashing';
+                    if (isRefresh) {
+                        this.$notify({
+                            title: 'Success!',
+                            text: 'Servers refreshed successfully.',
+                            type: 'success',
+                        });
+                    }
                 } catch (e) {
                     console.error(e);
                     this.servers = [];
-                    this.error('Unable to get servers!');
+                    this.error('Unable to get server list. Please contact the admin!');
                 }
                 this.$store.commit('setLoading', false);
             }).catch((err) => {
+                this.error('Unable to get server list. Please contact the admin!');
+                this.$store.commit('setLoading', false);
                 console.error(err);
             });
         },

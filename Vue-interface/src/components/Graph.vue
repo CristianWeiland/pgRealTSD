@@ -72,6 +72,12 @@ export default {
             return this.dataArr;
         },
     },
+    beforeDestroy() {
+        if (this.intervalId !== null) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+    },
     methods: {
         beforeEnter: function(el) {
           el.style.height = '0';
@@ -186,7 +192,6 @@ export default {
         },
         expandBox() {
             this.intervalId = setInterval(() => {
-                console.log('afdasdfa');
                 this.loadData(false);
             }, this.interval * 3000);
             this.$store.commit('createInterval', this.intervalId);
