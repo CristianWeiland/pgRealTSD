@@ -1,7 +1,7 @@
 <template>
     <div class="main-header">
         <div class="config">
-            <span style="margin-left: 10px" class="clickable" @click="$emit('showConfigs')">
+            <span style="margin-left: 10px" class="clickable" @click="goToConfigs">
                 <span class="glyphicon glyphicon-cog"></span>
             </span>
         </div>
@@ -9,14 +9,10 @@
             <transition name="fade" mode="out-in">
                 <span v-if="server && server.name">
                     Server <b>{{server.name}}</b> selected
-                    <!-- Removing servers works almost perfectly. The only problem is how to
-                    remove all created intervals. -->
-                    <!--
                     <span style="margin-left: 10px; margin-top: 5px; font-size: 25px; color: #a94442"
-                        class="clickable" @click="$emit('deselectServer')">
+                        class="clickable" @click="deselectServer">
                         <span class="glyphicon glyphicon-remove"></span>
                     </span>
-                    -->
                 </span>
                 <p v-else>No server selected. Please choose one from the menu.</p>
             </transition>
@@ -28,6 +24,14 @@
 export default {
     name: 'app-header',
     props: ['server', 'configurations'],
+    methods: {
+        deselectServer() {
+            this.$store.commit('selectServer', { server: null, idx: -1 });
+        },
+        goToConfigs() {
+            this.$router.push({ name: 'configs' });
+        },
+    },
 };
 </script>
 

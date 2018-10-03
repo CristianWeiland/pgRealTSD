@@ -9,6 +9,9 @@ export default new Vuex.Store({
         loading: {
             show: false,
         },
+        selectedServerIndex: -1,
+        server: null,
+        servers: [],
         intervals: [],
     },
     mutations: {
@@ -18,6 +21,13 @@ export default new Vuex.Store({
         setLoading(state, val) {
             state.loading.show = val;
         },
+        setServers(state, val) {
+            state.servers = val;
+        },
+        selectServer(state, data) {
+            state.server = data.server;
+            state.selectedServerIndex = data.idx;
+        },
         createInterval(state, interval) {
             state.intervals.push(interval);
         },
@@ -25,6 +35,20 @@ export default new Vuex.Store({
             state.intervals.forEach((id) => {
                 clearInterval(id);
             });
+        },
+    },
+    getters: {
+        servers(state) {
+            return state.servers;
+        },
+        selectedServerIndex(state) {
+            return state.selectedServerIndex;
+        },
+        selectedServer(state) {
+            return state.server;
+        },
+        configurations(state) {
+            return state.configurations;
         },
     },
 });

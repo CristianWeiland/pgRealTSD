@@ -2,7 +2,6 @@
     <div id="app">
         <notifications class="custom-notification"></notifications>
         <div class="centralize">
-            <!-- <h2 v-if="loading.show">{{loading.msg}}</h2> -->
             <clip-loader :loading="loading.show"></clip-loader>
         </div>
         <main-page :class="{ loading: loading.show }"></main-page>

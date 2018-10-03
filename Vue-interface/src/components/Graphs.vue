@@ -2,7 +2,7 @@
     <div v-if="availableAttributes && availableAttributes.length">
         <div v-for="i in nGraphs" :key="i">
             <div :class="[`col-xs-${12/nGraphs}`]">
-                <div v-for="(attrObj, index) in availableAttributes" :key="index">
+                <div v-for="(attrObj, index) in availableAttributes" :key="index" style="background-color: #fff">
                     <graph
                         v-if="index % nGraphs == i-1 && server && attrObj && attrObj.attribute"
                         :serverName="server.name"

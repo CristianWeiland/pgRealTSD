@@ -11,7 +11,7 @@
         </remove-server-modal>
 
         <div class="back">
-            <span class="clickable" @click="$emit('closeConfigs')">
+            <span class="clickable" @click="$router.push({ name: 'main' })">
                 <span class="clickable glyphicon glyphicon-arrow-left"></span>
             </span>
         </div>
@@ -103,9 +103,10 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 import NewServerModal from './NewServerModal';
 import RemoveServerModal from './RemoveServerModal';
-
 import { activateServer, deleteServer } from '../services/server';
 
 export default {
@@ -114,10 +115,10 @@ export default {
         NewServerModal,
         RemoveServerModal,
     },
-    props: ['servers'],
+    props: [],
     data() {
         return {
-            configurations: this.$store.state.configurations,
+            // configurations: this.$store.state.configurations,
             showingNewServerModal: false,
             showingRemoveServerModal: false,
             removeIdx: -1,
@@ -125,6 +126,7 @@ export default {
         };
     },
     computed: {
+        ...mapGetters(['servers', 'configurations']),
         empty() {
             return !this.servers || !this.servers.length;
         },
@@ -137,8 +139,7 @@ export default {
             this.$notify({ title: 'Error!', text: msg, type: 'error' });
         },
         turn(idx) {
-            activateServer(this.servers[idx].name).then((res) => {
-                console.log(res);
+            activateServer(this.servers[idx].name).then(() => {
                 this.$set(this.servers[idx], 'active', !this.servers[idx].active);
                 this.success(`Server ${this.servers[idx].active ? '' : 'de'}activated succesfully!`);
             }).catch(() => {

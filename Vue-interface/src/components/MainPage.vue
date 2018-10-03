@@ -1,54 +1,14 @@
 <template>
-    <transition name="fade" mode="out-in">
-        <div v-if="!showConfigurations">
-            <side-menu
-                @selectServer="selectServer"
-                @refresh="getServers(true)"
-                :servers="servers"
-                :serverIdx="selectedServerIdx">
-            </side-menu>
-
-            <div class="main main-background">
-                <app-header
-                    @deselectServer="server = {}"
-                    @showConfigs="showConfigs()"
-                    :configurations="configurations"
-                    :server="server"></app-header>
-
-                <graphs :server="server" :configurations="configurations"></graphs>
-            </div>
-        </div>
-
-        <configurations v-else
-            @addServer="(server) => { this.servers.push(server); }"
-            @closeConfigs="showConfigurations = false"
-            :configurations="configurations"
-            :show="showConfigurations"
-            :servers="servers">
-        </configurations>
-    </transition>
+    <div>
+        <router-view></router-view>
+    </div>
 </template>
 
 <script>
-import Graphs from './Graphs';
-import SideMenu from './SideMenu';
-import AppHeader from './AppHeader';
-import Configurations from './Configurations';
-import { getServer, getAllServers } from '../services/server';
 
 export default {
     name: 'main-page',
-    components: {
-        Graphs,
-        SideMenu,
-        AppHeader,
-        Configurations,
-    },
-    mounted() {
-        this.$store.commit('setLoading', true);
-        this.getServers();
-    },
-    data() {
+    created() {
         let configs = this.$cookies.get('configurations');
         if (configs) {
             configs = JSON.parse(configs);
@@ -63,72 +23,6 @@ export default {
             };
         }
         this.$store.commit('setConfigs', configs);
-        return {
-            loading: this.$store.state.loading,
-            server: {},
-            servers: [],
-            selectedServerIdx: 0,
-            showConfigurations: false,
-            configurations: this.$store.state.configurations,
-        };
-    },
-    methods: {
-        getServers(isRefresh) {
-            getAllServers().then((response) => {
-                try {
-                    if (!response.status || response.status !== 200) {
-                        return this.error('Unable to get servers!');
-                    }
-                    this.servers = response.data;
-                    this.server = this.servers[0];
-                    // Test icons:
-                    // this.servers[0].state = 'warmup';
-                    // this.servers[0].state = 'steady';
-                    // this.servers[0].state = 'under_pressure';
-                    // this.servers[0].state = 'stress';
-                    // this.servers[0].state = 'trashing';
-                    if (isRefresh) {
-                        this.$notify({
-                            title: 'Success!',
-                            text: 'Servers refreshed successfully.',
-                            type: 'success',
-                        });
-                    }
-                } catch (e) {
-                    console.error(e);
-                    this.servers = [];
-                    this.error('Unable to get server list. Please contact the admin!');
-                }
-                this.$store.commit('setLoading', false);
-            }).catch((err) => {
-                this.error('Unable to get server list. Please contact the admin!');
-                this.$store.commit('setLoading', false);
-                console.error(err);
-            });
-        },
-        error(msg) {
-            this.$notify({
-                title: 'Error!',
-                text: msg,
-                type: 'error',
-            });
-        },
-        showConfigs() {
-            this.showConfigurations = true;
-            this.$store.commit('removeIntervals');
-        },
-        selectServer(idx) {
-            this.$store.commit('setLoading', true);
-            getServer(this.servers[idx].name).then((res) => {
-                this.$store.commit('setLoading', false);
-                this.serverIdx = idx;
-                this.server = res.data;
-            }).catch((err) => {
-                console.log(err);
-                this.error(`Unable to get server ${this.servers[idx].name}!`);
-                this.$store.commit('setLoading', false);
-            });
-        },
     },
 };
 </script>
